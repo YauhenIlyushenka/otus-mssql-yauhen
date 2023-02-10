@@ -25,7 +25,11 @@ USE WideWorldImporters;
 Таблицы: Warehouse.StockItems.
 */
 
--- напишите здесь свое решение
+SELECT 
+	StockItemID,
+	StockItemName
+FROM [Warehouse].[StockItems]
+WHERE StockItemName LIKE '%urgent%' OR StockItemName LIKE 'Animal%'
 
 /*
 2. Поставщиков (Suppliers), у которых не было сделано ни одного заказа (PurchaseOrders).
@@ -36,7 +40,12 @@ USE WideWorldImporters;
 По каким колонкам делать JOIN подумайте самостоятельно.
 */
 
--- напишите здесь свое решение
+SELECT 
+	ps.SupplierID,
+	ps.SupplierName
+FROM [Purchasing].[Suppliers] AS ps
+LEFT JOIN [Purchasing].[PurchaseOrders] AS pp ON pp.SupplierID = ps.SupplierID
+WHERE pp.SupplierID IS NULL
 
 /*
 3. Заказы (Orders) с товарами ценой (UnitPrice) более 100$
@@ -58,7 +67,41 @@ USE WideWorldImporters;
 Таблицы: Sales.Orders, Sales.OrderLines, Sales.Customers.
 */
 
--- напишите здесь свое решение
+SELECT DISTINCT 
+	   so.OrderID,
+	   FORMAT(so.OrderDate, 'dd.MM.yyyy') AS OrderDate,
+       DATENAME(mm, so.OrderDate) AS [Month],
+	   DATEPART(qq, so.OrderDate) AS [Quarter],
+	   CASE
+			WHEN MONTH(so.OrderDate) <= 4 THEN 1
+			WHEN MONTH(so.OrderDate) BETWEEN 5 AND 8 THEN 2
+			ELSE 3
+	   END AS ThirdOfTheYear,
+	   sc.CustomerName
+FROM [Sales].[Orders] AS so
+JOIN [Sales].[OrderLines] AS sol ON sol.OrderID = so.OrderID
+JOIN [Sales].[Customers] AS sc ON so.CustomerID = sc.CustomerID
+WHERE sol.UnitPrice > 100 OR (sol.Quantity > 20 AND sol.PickingCompletedWhen IS NOT NULL)
+ORDER BY [Quarter], ThirdOfTheYear, OrderDate
+
+-- with offset
+SELECT DISTINCT 
+	   so.OrderID,
+	   FORMAT(so.OrderDate, 'dd.MM.yyyy') AS OrderDate,
+       DATENAME(mm, so.OrderDate) AS [Month],
+	   DATEPART(qq, so.OrderDate) AS [Quarter],
+	   CASE
+			WHEN MONTH(so.OrderDate) <= 4 THEN 1
+			WHEN MONTH(so.OrderDate) BETWEEN 5 AND 8 THEN 2
+			ELSE 3
+	   END AS ThirdOfTheYear,
+	   sc.CustomerName
+FROM [Sales].[Orders] AS so
+JOIN [Sales].[OrderLines] AS sol ON sol.OrderID = so.OrderID
+JOIN [Sales].[Customers] AS sc ON so.CustomerID = sc.CustomerID
+WHERE sol.UnitPrice > 100 OR (sol.Quantity > 20 AND sol.PickingCompletedWhen IS NOT NULL)
+ORDER BY [Quarter], ThirdOfTheYear, OrderDate
+OFFSET 1000 ROWS FETCH FIRST 100 ROWS ONLY
 
 /*
 4. Заказы поставщикам (Purchasing.Suppliers),
@@ -75,7 +118,19 @@ USE WideWorldImporters;
 Таблицы: Purchasing.Suppliers, Purchasing.PurchaseOrders, Application.DeliveryMethods, Application.People.
 */
 
--- напишите здесь свое решение
+SELECT
+	ad.DeliveryMethodName,
+	PP.ExpectedDeliveryDate,
+	ps.SupplierName,
+	ap.PreferredName AS ContactPerson
+FROM [Purchasing].[Suppliers] AS ps
+JOIN [Purchasing].[PurchaseOrders] AS pp ON pp.SupplierID = ps.SupplierID
+JOIN [Application].[People] AS ap ON ap.PersonID = pp.ContactPersonID
+JOIN [Application].[DeliveryMethods] AS ad ON ad.DeliveryMethodID = pp.DeliveryMethodID
+WHERE MONTH(pp.ExpectedDeliveryDate) = 1 
+	  AND YEAR(pp.ExpectedDeliveryDate) = 2013
+      AND ad.DeliveryMethodName IN ('Air Freight', 'Refrigerated Air Freight')
+	  AND pp.IsOrderFinalized = 1
 
 /*
 5. Десять последних продаж (по дате продажи - InvoiceDate) с именем клиента (клиент - CustomerID) и именем сотрудника,
@@ -86,7 +141,15 @@ USE WideWorldImporters;
 Таблицы: Sales.Invoices, Sales.Customers, Application.People.
 */
 
--- напишите здесь свое решение
+SELECT TOP (10)
+	si.InvoiceID,
+	si.InvoiceDate,
+	sc.CustomerName,
+	ap.FullName AS SalespersonPerson
+FROM [Sales].[Invoices] AS si
+JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+JOIN [Application].[People] AS ap ON ap.PersonID = si.SalespersonPersonID
+ORDER BY si.InvoiceDate DESC
 
 /*
 6. Все ид и имена клиентов (клиент - CustomerID) и их контактные телефоны (PhoneNumber),
@@ -96,4 +159,12 @@ USE WideWorldImporters;
 Таблицы: Sales.Invoices, Sales.InvoiceLines, Sales.Customers, Warehouse.StockItems.
 */
 
--- напишите здесь свое решение
+SELECT 
+	sc.CustomerID,
+	sc.CustomerName,
+	sc.PhoneNumber
+FROM [Sales].[Invoices] AS si
+JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
+JOIN [Warehouse].[StockItems] AS ws on ws.StockItemID = sil.StockItemID
+WHERE ws.StockItemName = 'Chocolate frogs 250g'
