@@ -30,7 +30,16 @@ USE WideWorldImporters;
 Продажи смотреть в таблице Sales.Invoices и связанных таблицах.
 */
 
--- напишите здесь свое решение
+SELECT 
+	YEAR (so.OrderDate) AS [Year],
+	MONTH(so.OrderDate) AS [Month],
+	AVG(sol.UnitPrice) AS AverageUnitPriceByMonth,
+	SUM (sol.UnitPrice * sol.Quantity) AS SumUnitPricePerMonth
+FROM [Sales].[Invoices] AS si
+JOIN [Sales].[Orders] AS so ON so.OrderID = si.OrderID
+JOIN [Sales].[OrderLines] AS sol ON sol.OrderID = so.OrderID
+GROUP BY YEAR (so.OrderDate), MONTH(so.OrderDate)
+ORDER BY [Year], [Month]
 
 /*
 2. Отобразить все месяцы, где общая сумма продаж превысила 4 600 000
@@ -45,7 +54,16 @@ USE WideWorldImporters;
 
 */
 
--- напишите здесь свое решение
+SELECT 
+	YEAR (so.OrderDate) AS [Year],
+	MONTH(so.OrderDate) AS [Month],
+	SUM (sol.UnitPrice * sol.Quantity) AS SumUnitPricePerMonth
+FROM [Sales].[Invoices] AS si
+JOIN [Sales].[Orders] AS so ON so.OrderID = si.OrderID
+JOIN [Sales].[OrderLines] AS sol ON sol.OrderID = so.OrderID
+GROUP BY YEAR (so.OrderDate), MONTH(so.OrderDate)
+HAVING SUM (sol.UnitPrice * sol.Quantity) > 4600000
+ORDER BY [Year], [Month]
 
 /*
 3. Вывести сумму продаж, дату первой продажи
@@ -64,7 +82,20 @@ USE WideWorldImporters;
 Продажи смотреть в таблице Sales.Invoices и связанных таблицах.
 */
 
--- напишите здесь свое решение
+SELECT
+	YEAR (so.OrderDate) AS [Year],
+	MONTH(so.OrderDate) AS [Month],
+	ws.StockItemName,
+	SUM(sol.UnitPrice * sol.Quantity) AS SumUnitPricePerMonth,
+	MIN(so.orderdate) AS DateOfFirstSale,
+	SUM(sol.Quantity) AS Quantity
+FROM [Sales].[Invoices] AS si
+JOIN [Sales].[Orders] AS so ON so.OrderID = si.OrderID
+JOIN [Sales].[OrderLines] AS sol ON sol.OrderID = so.OrderID
+JOIN [Warehouse].[StockItems] AS ws ON ws.StockItemID = sol.StockItemID
+GROUP BY YEAR (so.OrderDate), MONTH(so.OrderDate), ws.StockItemName
+HAVING SUM(sol.Quantity) < 50
+ORDER BY [Year], [Month]
 
 -- ---------------------------------------------------------------------------
 -- Опционально
@@ -93,3 +124,18 @@ Year | Month | SalesTotal
 2015 | 12    | -
 
 */
+
+SELECT 
+	YEAR (so.OrderDate) AS [Year],
+	MONTH(so.OrderDate) AS [Month],
+	CASE
+		WHEN SUM (sol.UnitPrice * sol.Quantity) > 4600000 
+		THEN CONVERT(nvarchar, SUM (sol.UnitPrice * sol.Quantity))
+		ELSE '-'
+	END AS SalesTotal
+FROM [Sales].[Invoices] AS si
+JOIN [Sales].[Orders] AS so ON so.OrderID = si.OrderID
+JOIN [Sales].[OrderLines] AS sol ON sol.OrderID = so.OrderID
+WHERE YEAR(so.OrderDate) = 2015
+GROUP BY YEAR(so.OrderDate), MONTH(so.OrderDate)
+ORDER BY [Year], [Month]
