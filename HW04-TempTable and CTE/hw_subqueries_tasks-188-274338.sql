@@ -30,14 +30,62 @@ USE WideWorldImporters
 Продажи смотреть в таблице Sales.Invoices.
 */
 
-TODO: напишите здесь свое решение
+SELECT ap.[PersonID], ap.[FullName]
+FROM [Application].[People] AS ap
+WHERE ap.IsSalesperson = 1 AND ap.PersonID IN (
+		SELECT DISTINCT si.SalespersonPersonID 
+		FROM [Sales].[Invoices] AS si
+		WHERE DAY(si.InvoiceDate) != 4
+			  AND MONTH(si.InvoiceDate) != 7
+		      AND YEAR(si.InvoiceDate) != 2015)
+
+GO
+
+-- CTE
+;WITH InvoicesCTE (SalespersonPersonID) AS 
+(
+	SELECT DISTINCT si.SalespersonPersonID 
+	FROM [Sales].[Invoices] AS si
+	WHERE DAY(si.InvoiceDate) != 4
+		  AND MONTH(si.InvoiceDate) != 7
+		  AND YEAR(si.InvoiceDate) != 2015
+)
+
+SELECT ap.[PersonID], ap.[FullName]
+FROM [Application].[People] AS ap
+JOIN InvoicesCTE AS iCTE ON ap.PersonID = iCTE.SalespersonPersonID
+ORDER BY ap.[PersonID]
+
+GO
 
 /*
 2. Выберите товары с минимальной ценой (подзапросом). Сделайте два варианта подзапроса. 
 Вывести: ИД товара, наименование товара, цена.
 */
 
-TODO: напишите здесь свое решение
+SELECT
+	ws.StockItemID AS Id,
+	ws.StockItemName,
+	ws.UnitPrice
+FROM [Warehouse].[StockItems] AS ws
+WHERE ws.UnitPrice = (SELECT MIN(UnitPrice) FROM [Warehouse].[StockItems])
+
+GO
+
+-- CTE
+;WITH MinPriceCTE (MinUnitPrice) AS 
+(
+	SELECT MIN(UnitPrice) FROM [Warehouse].[StockItems]
+)
+
+SELECT
+	ws.StockItemID AS Id,
+	ws.StockItemName,
+	ws.UnitPrice
+FROM [Warehouse].[StockItems] AS ws
+JOIN MinPriceCTE AS mpCTE ON ws.UnitPrice = mpCTE.MinUnitPrice
+
+GO
 
 /*
 3. Выберите информацию по клиентам, которые перевели компании пять максимальных платежей 
@@ -45,7 +93,45 @@ TODO: напишите здесь свое решение
 Представьте несколько способов (в том числе с CTE). 
 */
 
-TODO: напишите здесь свое решение
+SELECT 
+	sc.CustomerID,
+	sc.CustomerName,
+	sc.PhoneNumber
+FROM [Sales].[Customers] AS sc
+JOIN (
+	SELECT TOP 5
+		CustomerID,
+		MAX(TransactionAmount) AS MaxTransactionAmount
+	FROM [Sales].[CustomerTransactions]
+	WHERE InvoiceID iS NOT NULL
+	GROUP BY CustomerID
+	ORDER BY MaxTransactionAmount DESC)
+	AS tempResult
+ON sc.CustomerID = tempResult.CustomerID
+
+GO
+
+-- CTE
+;WITH CustomersByMaxTransactionAmount (CustomerID, MaxTransactionAmount) AS 
+(
+	SELECT TOP 5
+		CustomerID,
+		MAX(TransactionAmount) AS MaxTransactionAmount
+	FROM [Sales].[CustomerTransactions]
+	WHERE InvoiceID iS NOT NULL
+	GROUP BY CustomerID
+	ORDER BY MaxTransactionAmount DESC
+)
+
+SELECT 
+	sc.CustomerID,
+	sc.CustomerName,
+	sc.PhoneNumber
+FROM [Sales].[Customers] AS sc
+JOIN CustomersByMaxTransactionAmount AS cmta
+ON sc.CustomerID = cmta.CustomerID
+
+GO
 
 /*
 4. Выберите города (ид и название), в которые были доставлены товары, 
@@ -53,7 +139,26 @@ TODO: напишите здесь свое решение
 который осуществлял упаковку заказов (PackedByPersonID).
 */
 
-TODO: напишите здесь свое решение
+-- CTE
+;WITH TopStockItems (StockItemID) AS 
+(
+	SELECT TOP 3 
+		ws.StockItemID
+	FROM [Warehouse].[StockItems] AS ws
+	ORDER BY ws.UnitPrice DESC
+)
+
+SELECT DISTINCT
+	ac.CityID,
+	ac.CityName,
+	ap.FullName AS PackedPersonFullName
+FROM [Sales].[Invoices] AS si
+JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
+JOIN [Application].[Cities] AS ac ON ac.CityID = sc.DeliveryCityID
+JOIN [Application].[People] AS ap ON ap.PersonID = si.PackedByPersonID
+JOIN TopStockItems AS tsi ON sil.StockItemID = tsi.StockItemID
+ORDER BY ac.CityID
 
 -- ---------------------------------------------------------------------------
 -- Опциональное задание
