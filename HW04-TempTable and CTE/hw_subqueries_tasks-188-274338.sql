@@ -32,23 +32,25 @@ USE WideWorldImporters
 
 SELECT ap.[PersonID], ap.[FullName]
 FROM [Application].[People] AS ap
-WHERE ap.IsSalesperson = 1 AND ap.PersonID IN (
-		SELECT DISTINCT si.SalespersonPersonID 
+WHERE ap.IsSalesperson = 1 AND ap.PersonID NOT IN (
+		SELECT DISTINCT si.SalespersonPersonID
 		FROM [Sales].[Invoices] AS si
-		WHERE DAY(si.InvoiceDate) != 4
-			  AND MONTH(si.InvoiceDate) != 7
-		      AND YEAR(si.InvoiceDate) != 2015)
+		GROUP BY SI.SalespersonPersonID, si.InvoiceDate
+		HAVING si.InvoiceDate = '2015-07-04')
 
 GO
 
 -- CTE
 ;WITH InvoicesCTE (SalespersonPersonID) AS 
 (
-	SELECT DISTINCT si.SalespersonPersonID 
-	FROM [Sales].[Invoices] AS si
-	WHERE DAY(si.InvoiceDate) != 4
-		  AND MONTH(si.InvoiceDate) != 7
-		  AND YEAR(si.InvoiceDate) != 2015
+	SELECT DISTINCT 
+		SalespersonPersonID 
+	FROM [Sales].[Invoices]
+	WHERE SalespersonPersonID NOT IN (
+		SELECT DISTINCT si.SalespersonPersonID
+			FROM [Sales].[Invoices] AS si
+			GROUP BY SI.SalespersonPersonID, si.InvoiceDate
+			HAVING si.InvoiceDate = '2015-07-04')
 )
 
 SELECT ap.[PersonID], ap.[FullName]
@@ -69,6 +71,13 @@ SELECT
 	ws.UnitPrice
 FROM [Warehouse].[StockItems] AS ws
 WHERE ws.UnitPrice = (SELECT MIN(UnitPrice) FROM [Warehouse].[StockItems])
+
+SELECT
+	ws.StockItemID AS Id,
+	ws.StockItemName,
+	ws.UnitPrice
+FROM [Warehouse].[StockItems] AS ws
+WHERE ws.UnitPrice <= ALL (SELECT UnitPrice FROM [Warehouse].[StockItems])
 
 GO
 
