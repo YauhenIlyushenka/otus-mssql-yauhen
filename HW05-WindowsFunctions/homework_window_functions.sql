@@ -38,21 +38,108 @@ USE WideWorldImporters
 Нарастающий итог должен быть без оконной функции.
 */
 
-напишите здесь свое решение
+GO
+
+SET STATISTICS IO ON
+SET STATISTICS TIME ON 
+GO
+
+;WITH MainTempResult (InvoiceID, CustomerName, InvoiceDate, SumAmountPerInvoice) AS 
+(
+	SELECT 
+	si.InvoiceID,
+	(SELECT 
+		CustomerName 
+	 FROM [Sales].[Customers]
+	 WHERE [Sales].[Customers].CustomerID = si.CustomerID) AS CustomerName,
+	si.InvoiceDate,
+	SUM(sil.Quantity * sil.UnitPrice) AS SumAmountPerInvoice
+FROM [Sales].[Invoices] AS si
+JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
+JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+WHERE YEAR(si.InvoiceDate) = 2015
+GROUP BY si.InvoiceID, si.CustomerID, si.InvoiceDate
+)
+
+SELECT 
+	mtp.InvoiceID,
+	mtp.InvoiceDate,
+	mtp.CustomerName,
+	mtp.SumAmountPerInvoice,
+	(SELECT 
+		SUM(mtp1.SumAmountPerInvoice) 
+	 FROM MainTempResult AS mtp1
+	 WHERE MONTH(mtp.InvoiceDate) >= MONTH(mtp1.InvoiceDate)) AS SumUp
+FROM MainTempResult AS mtp
+ORDER BY mtp.InvoiceDate, mtp.InvoiceID
+
+GO
+
+SET STATISTICS IO OFF
+SET STATISTICS TIME OFF
+GO
+
+/*
+SQL Server Execution Times:
+CPU time = 52937 ms,  elapsed time = 71422 ms.
+*/
 
 /*
 2. Сделайте расчет суммы нарастающим итогом в предыдущем запросе с помощью оконной функции.
    Сравните производительность запросов 1 и 2 с помощью set statistics time, io on
 */
 
-напишите здесь свое решение
+GO
+
+SET STATISTICS IO ON
+SET STATISTICS TIME ON 
+GO
+
+;WITH MainTempResult (InvoiceID, CustomerName, InvoiceDate, SumAmountPerInvoice) AS 
+(
+	SELECT 
+	si.InvoiceID,
+	(SELECT 
+		CustomerName 
+	 FROM [Sales].[Customers]
+	 WHERE [Sales].[Customers].CustomerID = si.CustomerID) AS CustomerName,
+	si.InvoiceDate,
+	SUM(sil.Quantity * sil.UnitPrice) AS SumAmountPerInvoice
+FROM [Sales].[Invoices] AS si
+JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
+JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+WHERE YEAR(si.InvoiceDate) = 2015
+GROUP BY si.InvoiceID, si.CustomerID, si.InvoiceDate
+)
+
+SELECT 
+	mtp.InvoiceID,
+	mtp.InvoiceDate,
+	mtp.CustomerName,
+	mtp.SumAmountPerInvoice,
+	SUM(mtp.SumAmountPerInvoice) OVER(ORDER BY MONTH(mtp.InvoiceDate) RANGE UNBOUNDED PRECEDING) AS SumUp
+FROM MainTempResult AS mtp
+ORDER BY mtp.InvoiceDate, mtp.InvoiceID
+
+GO
+
+SET STATISTICS IO OFF
+SET STATISTICS TIME OFF
+GO
+
+/*
+SQL Server Execution Times:
+CPU time = 78 ms,  elapsed time = 360 ms.
+
+To sum up, the second query (with window function) was completed faster then the first one.
+*/
 
 /*
 3. Вывести список 2х самых популярных продуктов (по количеству проданных) 
 в каждом месяце за 2016 год (по 2 самых популярных продукта в каждом месяце).
 */
 
-напишите здесь свое решение
+
 
 /*
 4. Функции одним запросом
