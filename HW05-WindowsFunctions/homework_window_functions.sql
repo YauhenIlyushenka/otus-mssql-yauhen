@@ -146,7 +146,7 @@ GO
 	SELECT
 		sil.StockItemID,
 		MONTH(si.InvoiceDate) AS [Month],
-		SUM(sil.Quantity) as SumQuantity,
+		SUM(sil.Quantity) AS SumQuantity,
 		ROW_NUMBER() OVER (PARTITION BY MONTH(si.InvoiceDate) ORDER BY MONTH(si.InvoiceDate)) AS Popularity
 	FROM [Sales].[Invoices] AS si
 	JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
@@ -194,7 +194,7 @@ GO
 		SELECT 
 			ap.PersonID,
 			ap.FullName 
-		FROM [Application].[People] as ap
+		FROM [Application].[People] AS ap
 	),
 
 	CustomerInformationCTE(CustomerID, CustomerName) AS
@@ -202,7 +202,7 @@ GO
 		SELECT 
 			sc.CustomerID,
 			sc.CustomerName
-		FROM [Sales].[Customers] as sc
+		FROM [Sales].[Customers] AS sc
 	),
 
 	ResultCustomersAndSalesInformationCTE (SalespersonPersonID, SalesPersonFullName, CustomerID, CustomerName, InvoiceDate, TransactionAmount, RowNumber) AS
@@ -245,6 +245,44 @@ GO
 В результатах должно быть ид клиета, его название, ид товара, цена, дата покупки.
 */
 
-напишите здесь свое решение
+GO
+
+;WITH 
+	CustomerInformationCTE(CustomerID, CustomerName) AS
+	(
+		SELECT 
+			sc.CustomerID,
+			sc.CustomerName
+		FROM [Sales].[Customers] AS sc
+	),
+	StockItemAndClientInformationCTE (CustomerID, CustomerName, StockItemID, UnitPrice, Helper) AS 
+	(
+		SELECT 
+			si.CustomerID,
+			(SELECT
+				ciCTE.CustomerName 
+			FROM CustomerInformationCTE AS ciCTE 
+			WHERE ciCTE.CustomerID = si.CustomerID) AS CustomerName,
+			wsi.StockItemID,
+			wsi.UnitPrice,
+			ROW_NUMBER() OVER (PARTITION BY si.CustomerID ORDER BY wsi.UnitPrice DESC) AS Helper
+		FROM [Sales].[Invoices] AS si
+		JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+		JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
+		JOIN [Warehouse].[StockItems] AS wsi ON sil.StockItemID = wsi.StockItemID
+		JOIN [Sales].[CustomerTransactions] AS sct ON sct.InvoiceID = si.InvoiceID AND sct.CustomerID = si.CustomerID
+		GROUP BY si.CustomerID, wsi.StockItemID, wsi.UnitPrice
+	)
+
+SELECT
+	siciCTE.CustomerID,
+	siciCTE.CustomerName,
+	siciCTE.StockItemID,
+	siciCTE.UnitPrice,
+	siciCTE.Helper
+FROM StockItemAndClientInformationCTE AS siciCTE
+WHERE Helper <=2
+
+GO
 
 Опционально можете для каждого запроса без оконных функций сделать вариант запросов с оконными функциями и сравнить их производительность. 
