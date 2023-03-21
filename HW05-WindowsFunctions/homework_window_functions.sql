@@ -187,7 +187,58 @@ GO
    В результатах должны быть ид и фамилия сотрудника, ид и название клиента, дата продажи, сумму сделки.
 */
 
-напишите здесь свое решение
+GO
+
+;WITH SalesPersonInformationCTE(SalesPersonID, salesFullName) AS
+	(
+		SELECT 
+			ap.PersonID,
+			ap.FullName 
+		FROM [Application].[People] as ap
+	),
+
+	CustomerInformationCTE(CustomerID, CustomerName) AS
+	(
+		SELECT 
+			sc.CustomerID,
+			sc.CustomerName
+		FROM [Sales].[Customers] as sc
+	),
+
+	ResultCustomersAndSalesInformationCTE (SalespersonPersonID, SalesPersonFullName, CustomerID, CustomerName, InvoiceDate, TransactionAmount, RowNumber) AS
+	(
+		SELECT
+			si.SalespersonPersonID,
+			(SELECT 
+				spiCTE.salesFullName 
+			FROM SalesPersonInformationCTE AS spiCTE 
+			WHERE spiCTE.SalesPersonID = si.SalespersonPersonID) AS SalesPersonFullName,
+			si.CustomerID,
+			(SELECT 
+				ciCTE.CustomerName 
+			FROM CustomerInformationCTE AS ciCTE 
+			WHERE ciCTE.CustomerID = si.CustomerID) AS CustomerName,
+			si.InvoiceDate,
+			sct.TransactionAmount,
+			ROW_NUMBER() OVER (PARTITION BY si.SalespersonPersonID ORDER BY si.InvoiceDate DESC, si.InvoiceID DESC) AS RowNumber
+		FROM [Sales].[Invoices] AS si
+		JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+		JOIN [Application].[People] AS ap ON ap.PersonID = si.SalespersonPersonID
+		JOIN [Sales].[CustomerTransactions] AS sct ON sct.InvoiceID = si.InvoiceID AND sct.CustomerID = si.CustomerID
+		GROUP BY si.InvoiceID, si.InvoiceDate, si.SalespersonPersonID, si.CustomerID, sct.TransactionAmount
+	)
+
+SELECT 
+	rcsi.SalespersonPersonID,
+	rcsi.SalesPersonFullName,
+	rcsi.CustomerID,
+	rcsi.CustomerName,
+	rcsi.InvoiceDate,
+	rcsi.TransactionAmount
+FROM ResultCustomersAndSalesInformationCTE AS rcsi
+WHERE rcsi.RowNumber = 1
+
+GO
 
 /*
 6. Выберите по каждому клиенту два самых дорогих товара, которые он покупал.
