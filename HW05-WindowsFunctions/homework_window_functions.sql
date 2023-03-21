@@ -139,7 +139,32 @@ To sum up, the second query (with window function) was completed faster then the
 в каждом месяце за 2016 год (по 2 самых популярных продукта в каждом месяце).
 */
 
+GO
 
+;WITH MainPopularItems (StockItemID, [Month], SumQuantity, Popularity) AS
+(
+	SELECT
+		sil.StockItemID,
+		MONTH(si.InvoiceDate) AS [Month],
+		SUM(sil.Quantity) as SumQuantity,
+		ROW_NUMBER() OVER (PARTITION BY MONTH(si.InvoiceDate) ORDER BY MONTH(si.InvoiceDate)) AS Popularity
+	FROM [Sales].[Invoices] AS si
+	JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
+	JOIN [Warehouse].[StockItems] AS wsi ON sil.StockItemID = wsi.StockItemID
+	WHERE YEAR(si.InvoiceDate) = 2016
+	GROUP BY sil.StockItemID, MONTH(si.InvoiceDate)
+)
+
+SELECT
+	mpi.StockItemID,
+	mpi.Month,
+	mpi.SumQuantity,
+	mpi.Popularity
+FROM MainPopularItems AS mpi
+WHERE mpi.Popularity <= 2
+ORDER BY mpi.Month, mpi.SumQuantity DESC
+
+GO
 
 /*
 4. Функции одним запросом
