@@ -47,18 +47,18 @@ GO
 ;WITH MainTempResult (InvoiceID, CustomerName, InvoiceDate, SumAmountPerInvoice) AS 
 (
 	SELECT 
-	si.InvoiceID,
-	(SELECT 
-		CustomerName 
-	 FROM [Sales].[Customers]
-	 WHERE [Sales].[Customers].CustomerID = si.CustomerID) AS CustomerName,
-	si.InvoiceDate,
-	SUM(sil.Quantity * sil.UnitPrice) AS SumAmountPerInvoice
-FROM [Sales].[Invoices] AS si
-JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
-JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
-WHERE YEAR(si.InvoiceDate) = 2015
-GROUP BY si.InvoiceID, si.CustomerID, si.InvoiceDate
+		si.InvoiceID,
+		(SELECT 
+			CustomerName 
+		FROM [Sales].[Customers]
+		WHERE [Sales].[Customers].CustomerID = si.CustomerID) AS CustomerName,
+		si.InvoiceDate,
+		SUM(sil.Quantity * sil.UnitPrice) AS SumAmountPerInvoice
+	FROM [Sales].[Invoices] AS si
+	JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
+	JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+	WHERE YEAR(si.InvoiceDate) = 2015
+	GROUP BY si.InvoiceID, si.CustomerID, si.InvoiceDate
 )
 
 SELECT 
@@ -98,18 +98,18 @@ GO
 ;WITH MainTempResult (InvoiceID, CustomerName, InvoiceDate, SumAmountPerInvoice) AS 
 (
 	SELECT 
-	si.InvoiceID,
-	(SELECT 
-		CustomerName 
-	 FROM [Sales].[Customers]
-	 WHERE [Sales].[Customers].CustomerID = si.CustomerID) AS CustomerName,
-	si.InvoiceDate,
-	SUM(sil.Quantity * sil.UnitPrice) AS SumAmountPerInvoice
-FROM [Sales].[Invoices] AS si
-JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
-JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
-WHERE YEAR(si.InvoiceDate) = 2015
-GROUP BY si.InvoiceID, si.CustomerID, si.InvoiceDate
+		si.InvoiceID,
+		(SELECT 
+			CustomerName 
+		FROM [Sales].[Customers]
+		WHERE [Sales].[Customers].CustomerID = si.CustomerID) AS CustomerName,
+		si.InvoiceDate,
+		SUM(sil.Quantity * sil.UnitPrice) AS SumAmountPerInvoice
+	FROM [Sales].[Invoices] AS si
+	JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
+	JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+	WHERE YEAR(si.InvoiceDate) = 2015
+	GROUP BY si.InvoiceID, si.CustomerID, si.InvoiceDate
 )
 
 SELECT 
