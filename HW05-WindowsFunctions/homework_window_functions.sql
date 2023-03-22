@@ -180,7 +180,25 @@ GO
 Для этой задачи НЕ нужно писать аналог без аналитических функций.
 */
 
-напишите здесь свое решение
+GO
+
+SELECT 
+	wsi.StockItemID,
+	wsi.StockItemName,
+	wsi.Brand,
+	wsi.UnitPrice,
+	ROW_NUMBER() OVER (PARTITION BY LEFT(wsi.StockItemName,1) ORDER BY wsi.StockItemName) AS RowNumber,
+	COUNT(*) OVER() AS StockItemCount,
+	COUNT(*) OVER (PARTITION BY LEFT(wsi.StockItemName,1)) AS StockItemCountPerFirstLetter,
+	LEAD(wsi.StockItemID) OVER(ORDER BY wsi.StockItemName) AS LeadStockItemId,
+	LAG(wsi.StockItemID) OVER(ORDER BY wsi.StockItemName) AS LagStockItemId,
+	LAG(wsi.StockItemName, 2, 'No items') OVER(ORDER BY wsi.StockItemName) AS LagStockItemNameScipingTwoRecords,
+	NTILE(30) OVER (ORDER BY wsi.TypicalWeightPerUnit) AS GroupNumber
+FROM [Warehouse].[StockItems] AS wsi
+GROUP BY wsi.StockItemName, wsi.StockItemID, wsi.Brand, wsi.UnitPrice, wsi.TypicalWeightPerUnit
+ORDER BY wsi.StockItemName
+
+GO
 
 /*
 5. По каждому сотруднику выведите последнего клиента, которому сотрудник что-то продал.
@@ -281,7 +299,7 @@ SELECT
 	siciCTE.UnitPrice,
 	siciCTE.Helper
 FROM StockItemAndClientInformationCTE AS siciCTE
-WHERE Helper <=2
+WHERE Helper <= 2
 
 GO
 
