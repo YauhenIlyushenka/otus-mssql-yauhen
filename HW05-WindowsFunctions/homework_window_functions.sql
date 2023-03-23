@@ -57,7 +57,7 @@ GO
 	FROM [Sales].[Invoices] AS si
 	JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
 	JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
-	WHERE YEAR(si.InvoiceDate) = 2015
+	WHERE YEAR(si.InvoiceDate) >= 2015
 	GROUP BY si.InvoiceID, si.CustomerID, si.InvoiceDate
 )
 
@@ -69,7 +69,9 @@ SELECT
 	(SELECT 
 		SUM(mtp1.SumAmountPerInvoice) 
 	 FROM MainTempResult AS mtp1
-	 WHERE MONTH(mtp.InvoiceDate) >= MONTH(mtp1.InvoiceDate)) AS SumUp
+	 WHERE MONTH(mtp.InvoiceDate) >= MONTH(mtp1.InvoiceDate)
+	 AND YEAR(mtp.InvoiceDate) >= YEAR(mtp1.InvoiceDate)
+	 ) AS SumUp
 FROM MainTempResult AS mtp
 ORDER BY mtp.InvoiceDate, mtp.InvoiceID
 
@@ -108,7 +110,7 @@ GO
 	FROM [Sales].[Invoices] AS si
 	JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
 	JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
-	WHERE YEAR(si.InvoiceDate) = 2015
+	WHERE YEAR(si.InvoiceDate) >= 2015
 	GROUP BY si.InvoiceID, si.CustomerID, si.InvoiceDate
 )
 
@@ -117,7 +119,7 @@ SELECT
 	mtp.InvoiceDate,
 	mtp.CustomerName,
 	mtp.SumAmountPerInvoice,
-	SUM(mtp.SumAmountPerInvoice) OVER(ORDER BY MONTH(mtp.InvoiceDate) RANGE UNBOUNDED PRECEDING) AS SumUp
+	SUM(mtp.SumAmountPerInvoice) OVER(ORDER BY YEAR(mtp.InvoiceDate), MONTH(mtp.InvoiceDate) RANGE UNBOUNDED PRECEDING) AS SumUp
 FROM MainTempResult AS mtp
 ORDER BY mtp.InvoiceDate, mtp.InvoiceID
 
