@@ -273,7 +273,7 @@ GO
 			sc.CustomerName
 		FROM [Sales].[Customers] AS sc
 	),
-	StockItemAndClientInformationCTE (CustomerID, CustomerName, StockItemID, UnitPrice, Helper) AS 
+	StockItemAndClientInformationCTE (CustomerID, CustomerName, StockItemID, UnitPrice, InvoiceDate, Helper) AS 
 	(
 		SELECT 
 			si.CustomerID,
@@ -283,23 +283,47 @@ GO
 			WHERE ciCTE.CustomerID = si.CustomerID) AS CustomerName,
 			wsi.StockItemID,
 			wsi.UnitPrice,
-			ROW_NUMBER() OVER (PARTITION BY si.CustomerID ORDER BY wsi.UnitPrice DESC) AS Helper
+			si.InvoiceDate,
+			DENSE_RANK() OVER (PARTITION BY si.CustomerID ORDER BY wsi.UnitPrice DESC) AS Helper
 		FROM [Sales].[Invoices] AS si
 		JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
 		JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
 		JOIN [Warehouse].[StockItems] AS wsi ON sil.StockItemID = wsi.StockItemID
 		JOIN [Sales].[CustomerTransactions] AS sct ON sct.InvoiceID = si.InvoiceID AND sct.CustomerID = si.CustomerID
-		GROUP BY si.CustomerID, wsi.StockItemID, wsi.UnitPrice
+		GROUP BY si.CustomerID, wsi.StockItemID, wsi.UnitPrice, si.InvoiceDate
+	),
+	TwoMainExpensiveItemsPerCustomersCTE(CustomerID, CustomerName, StockItemID, UnitPrice, InvoiceDate, Helper, FirstInvoiceDatePerCustomer, LastInvoiceDatePerCustomer ) AS
+	(
+		SELECT
+			TempResult.CustomerID,
+			TempResult.CustomerName,
+			TempResult.StockItemID,
+			TempResult.UnitPrice,
+			TempResult.InvoiceDate,
+			TempResult.Helper,
+			FIRST_VALUE(TempResult.InvoiceDate) OVER (PARTITION BY TempResult.CustomerID,TempResult.Helper ORDER BY TempResult.CustomerID) AS FirstInvoiceDatePerCustomer,
+			LAST_VALUE(TempResult.InvoiceDate) OVER (PARTITION BY TempResult.CustomerID, TempResult.Helper ORDER BY TempResult.CustomerID) AS LastInvoiceDatePerCustomer
+		FROM (
+				SELECT
+					siciCTE.CustomerID,
+					siciCTE.CustomerName,
+					siciCTE.StockItemID,
+					siciCTE.UnitPrice,
+					siciCTE.InvoiceDate,
+					siciCTE.Helper
+				FROM StockItemAndClientInformationCTE AS siciCTE
+				WHERE siciCTE.Helper <= 2) AS TempResult
 	)
 
 SELECT
-	siciCTE.CustomerID,
-	siciCTE.CustomerName,
-	siciCTE.StockItemID,
-	siciCTE.UnitPrice,
-	siciCTE.Helper
-FROM StockItemAndClientInformationCTE AS siciCTE
-WHERE Helper <= 2
+	tmeipcCTE.CustomerID,
+	tmeipcCTE.CustomerName,
+	tmeipcCTE.StockItemID,
+	tmeipcCTE.UnitPrice,
+	tmeipcCTE.InvoiceDate
+FROM TwoMainExpensiveItemsPerCustomersCTE AS tmeipcCTE
+WHERE (tmeipcCTE.Helper = 1 AND tmeipcCTE.InvoiceDate = tmeipcCTE.FirstInvoiceDatePerCustomer)
+OR (tmeipcCTE.Helper = 2 AND tmeipcCTE.InvoiceDate = tmeipcCTE.LastInvoiceDatePerCustomer)
 
 GO
 
