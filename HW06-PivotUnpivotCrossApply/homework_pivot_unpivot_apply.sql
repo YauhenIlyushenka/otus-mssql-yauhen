@@ -54,7 +54,7 @@ SELECT
 	pvt.[Medicine Lodge, KS],
 	pvt.[Gasport, NY],
 	pvt.[Jessie, ND]
-FROM InvoicesByCustomersDataCTE as ibcCTE
+FROM InvoicesByCustomersDataCTE AS ibcCTE
 PIVOT(
 	COUNT(ibcCTE.InvoiceID) FOR ibcCTE.ClarifyCustomerName
 	IN(
@@ -152,7 +152,6 @@ UNPIVOT (
 	) AS sumUpTable
 
 GO
-
 
 /*
 4. Выберите по каждому клиенту два самых дорогих товара, которые он покупал.
