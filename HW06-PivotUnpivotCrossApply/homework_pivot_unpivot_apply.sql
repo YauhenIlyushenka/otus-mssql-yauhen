@@ -30,8 +30,42 @@ InvoiceMonth | Peeples Valley, AZ | Medicine Lodge, KS | Gasport, NY | Sylvanite
 01.02.2013   |      7             |        3           |      4      |      2       |     1
 -------------+--------------------+--------------------+-------------+--------------+------------
 */
+GO
 
-напишите здесь свое решение
+;WITH 
+	InvoicesByCustomersDataCTE AS 
+	(
+		SELECT
+			si.InvoiceID,
+			FORMAT (DATEADD(MONTH, DATEDIFF(month, 0, si.InvoiceDate), 0), 'dd-MM-yyyy') AS InvoiceMonth,
+			SUBSTRING(
+				sc.CustomerName,
+				CHARINDEX('(', sc.CustomerName) + 1,
+				CHARINDEX(')', sc.CustomerName) - CHARINDEX('(', sc.CustomerName) - 1) AS ClarifyCustomerName
+		FROM [Sales].[Invoices] AS si
+		JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+		WHERE si.CustomerID BETWEEN 2 AND 6
+	)
+
+SELECT 
+	pvt.InvoiceMonth,
+	pvt.[Sylvanite, MT],
+	pvt.[Peeples Valley, AZ],
+	pvt.[Medicine Lodge, KS],
+	pvt.[Gasport, NY],
+	pvt.[Jessie, ND]
+FROM InvoicesByCustomersDataCTE as ibcCTE
+PIVOT(
+	COUNT(ibcCTE.InvoiceID) FOR ibcCTE.ClarifyCustomerName
+	IN([Sylvanite, MT], 
+       [Peeples Valley, AZ], 
+       [Medicine Lodge, KS], 
+       [Gasport, NY],
+	   [Jessie, ND])) 
+	   AS pvt
+ORDER BY YEAR(pvt.InvoiceMonth)
+
+GO
 
 /*
 2. Для всех клиентов с именем, в котором есть "Tailspin Toys"
@@ -46,7 +80,7 @@ Tailspin Toys (Head Office) | PO Box 8975
 Tailspin Toys (Head Office) | Ribeiroville
 ----------------------------+--------------------
 */
-
+--UNPIVOT
 напишите здесь свое решение
 
 /*
@@ -63,12 +97,12 @@ CountryId | CountryName | Code
 3         | Albania     | 8
 ----------+-------------+-------
 */
-
+--UNPIVOT
 напишите здесь свое решение
 
 /*
 4. Выберите по каждому клиенту два самых дорогих товара, которые он покупал.
 В результатах должно быть ид клиета, его название, ид товара, цена, дата покупки.
 */
-
+- CROSS APPLY
 напишите здесь свое решение
