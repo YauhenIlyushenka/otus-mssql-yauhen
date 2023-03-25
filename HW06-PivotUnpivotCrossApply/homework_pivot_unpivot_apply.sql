@@ -37,7 +37,7 @@ GO
 	(
 		SELECT
 			si.InvoiceID,
-			FORMAT (DATEADD(MONTH, DATEDIFF(month, 0, si.InvoiceDate), 0), 'dd-MM-yyyy') AS InvoiceMonth,
+			FORMAT (DATEADD(MONTH, DATEDIFF(month, 0, si.InvoiceDate), 0), 'dd.MM.yyyy') AS InvoiceMonth,
 			SUBSTRING(
 				sc.CustomerName,
 				CHARINDEX('(', sc.CustomerName) + 1,
@@ -81,7 +81,7 @@ Tailspin Toys (Head Office) | Ribeiroville
 ----------------------------+--------------------
 */
 --UNPIVOT
-напишите здесь свое решение
+select * from 
 
 /*
 3. В таблице стран (Application.Countries) есть поля с цифровым кодом страны и с буквенным.
