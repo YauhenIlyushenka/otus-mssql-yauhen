@@ -81,7 +81,33 @@ Tailspin Toys (Head Office) | Ribeiroville
 ----------------------------+--------------------
 */
 --UNPIVOT
-select * from 
+;WITH 
+	CustomerInformationCTE AS 
+	(
+		SELECT
+			sc.CustomerName,
+			sc.DeliveryAddressLine1,
+			sc.DeliveryAddressLine2,
+			sc.PostalAddressLine1,
+			sc.PostalAddressLine2
+		FROM [Sales].[Customers] AS sc
+		WHERE sc.CustomerName LIKE '%Tailspin Toys%'
+	)
+
+SELECT 
+	sumUpTable.CustomerName,
+	sumUpTable.AddressLine
+FROM CustomerInformationCTE AS ciCTE
+UNPIVOT (
+	AddressLine FOR TypeOfAddresses 
+	IN (
+		ciCTE.DeliveryAddressLine1,
+		ciCTE.DeliveryAddressLine2,
+		ciCTE.PostalAddressLine1,
+		ciCTE.PostalAddressLine2)
+	) AS sumUpTable;
+
+
 
 /*
 3. В таблице стран (Application.Countries) есть поля с цифровым кодом страны и с буквенным.
