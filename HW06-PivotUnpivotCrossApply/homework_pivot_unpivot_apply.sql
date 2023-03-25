@@ -80,7 +80,8 @@ Tailspin Toys (Head Office) | PO Box 8975
 Tailspin Toys (Head Office) | Ribeiroville
 ----------------------------+--------------------
 */
---UNPIVOT
+GO
+
 ;WITH 
 	CustomerInformationCTE AS 
 	(
@@ -105,9 +106,9 @@ UNPIVOT (
 		ciCTE.DeliveryAddressLine2,
 		ciCTE.PostalAddressLine1,
 		ciCTE.PostalAddressLine2)
-	) AS sumUpTable;
+	) AS sumUpTable
 
-
+GO
 
 /*
 3. В таблице стран (Application.Countries) есть поля с цифровым кодом страны и с буквенным.
