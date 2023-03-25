@@ -61,8 +61,7 @@ PIVOT(
        [Peeples Valley, AZ], 
        [Medicine Lodge, KS], 
        [Gasport, NY],
-	   [Jessie, ND])) 
-	   AS pvt
+	   [Jessie, ND])) AS pvt
 ORDER BY MONTH(pvt.InvoiceMonth), YEAR(pvt.InvoiceMonth)
 
 GO
@@ -80,6 +79,7 @@ Tailspin Toys (Head Office) | PO Box 8975
 Tailspin Toys (Head Office) | Ribeiroville
 ----------------------------+--------------------
 */
+
 GO
 
 ;WITH 
@@ -124,8 +124,33 @@ CountryId | CountryName | Code
 3         | Albania     | 8
 ----------+-------------+-------
 */
---UNPIVOT
-напишите здесь свое решение
+GO
+
+;WITH 
+	CountryInformationCTE AS 
+	(
+		SELECT 
+			ac.CountryID,
+			ac.CountryName,
+			ac.IsoAlpha3Code,
+			CONVERT(nvarchar(3), ac.IsoNumericCode) AS IsoNumericCode
+		FROM [Application].[Countries] AS ac
+	)
+
+SELECT 
+	sumUpTable.CountryID,
+	sumUpTable.CountryName,
+	sumUpTable.Code
+FROM CountryInformationCTE AS ciCTE
+UNPIVOT (
+	Code FOR TypesOfCodes 
+	IN (
+		ciCTE.IsoAlpha3Code,
+		ciCTE.IsoNumericCode)
+	) AS sumUpTable
+
+GO
+
 
 /*
 4. Выберите по каждому клиенту два самых дорогих товара, которые он покупал.
