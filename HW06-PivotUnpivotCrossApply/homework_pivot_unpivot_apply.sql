@@ -57,11 +57,13 @@ SELECT
 FROM InvoicesByCustomersDataCTE as ibcCTE
 PIVOT(
 	COUNT(ibcCTE.InvoiceID) FOR ibcCTE.ClarifyCustomerName
-	IN([Sylvanite, MT], 
-       [Peeples Valley, AZ], 
-       [Medicine Lodge, KS], 
-       [Gasport, NY],
-	   [Jessie, ND])) AS pvt
+	IN(
+		[Sylvanite, MT], 
+		[Peeples Valley, AZ], 
+		[Medicine Lodge, KS], 
+		[Gasport, NY],
+		[Jessie, ND])
+	) AS pvt
 ORDER BY MONTH(pvt.InvoiceMonth), YEAR(pvt.InvoiceMonth)
 
 GO
@@ -156,5 +158,11 @@ GO
 4. Выберите по каждому клиенту два самых дорогих товара, которые он покупал.
 В результатах должно быть ид клиета, его название, ид товара, цена, дата покупки.
 */
+
+GO
+
+
+
+GO
 - CROSS APPLY
 напишите здесь свое решение
