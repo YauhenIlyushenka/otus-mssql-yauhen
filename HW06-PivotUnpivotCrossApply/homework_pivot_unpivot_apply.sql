@@ -157,11 +157,71 @@ GO
 4. Выберите по каждому клиенту два самых дорогих товара, которые он покупал.
 В результатах должно быть ид клиета, его название, ид товара, цена, дата покупки.
 */
-
+	
 GO
 
+;WITH 
+	CustomerInformationCTE(CustomerID, CustomerName) AS
+	(
+		SELECT 
+			sc.CustomerID,
+			sc.CustomerName
+		FROM [Sales].[Customers] AS sc
+	),
+	StockItemAndClientInformationWithInvoiceDateCTE (CustomerID, CustomerName, StockItemID, UnitPrice, InvoiceDate, Helper) AS 
+	(
+		SELECT 
+			si.CustomerID,
+			(SELECT
+				ciCTE.CustomerName 
+			FROM CustomerInformationCTE AS ciCTE 
+			WHERE ciCTE.CustomerID = si.CustomerID) AS CustomerName,
+			wsi.StockItemID,
+			wsi.UnitPrice,
+			si.InvoiceDate,
+			DENSE_RANK() OVER (PARTITION BY si.CustomerID ORDER BY wsi.UnitPrice DESC) AS Helper
+		FROM [Sales].[Invoices] AS si
+		JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+		JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
+		JOIN [Warehouse].[StockItems] AS wsi ON sil.StockItemID = wsi.StockItemID
+		JOIN [Sales].[CustomerTransactions] AS sct ON sct.InvoiceID = si.InvoiceID AND sct.CustomerID = si.CustomerID
+		GROUP BY si.CustomerID, wsi.StockItemID, wsi.UnitPrice, si.InvoiceDate
+	),
+	StockItemAndClientInformationDataCTE (CustomerID, CustomerName, StockItemID, UnitPrice, Helper) as 
+	( 
+		SELECT 
+		* 
+		FROM (
+			SELECT 
+				si.CustomerID,
+				(SELECT
+					ciCTE.CustomerName 
+				FROM CustomerInformationCTE AS ciCTE 
+				WHERE ciCTE.CustomerID = si.CustomerID) AS CustomerName,
+				wsi.StockItemID,
+				wsi.UnitPrice,
+				DENSE_RANK() OVER (PARTITION BY si.CustomerID ORDER BY wsi.UnitPrice DESC, wsi.StockItemID DESC) AS Helper
+			FROM [Sales].[Invoices] AS si
+			JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+			JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
+			JOIN [Warehouse].[StockItems] AS wsi ON sil.StockItemID = wsi.StockItemID
+			JOIN [Sales].[CustomerTransactions] AS sct ON sct.InvoiceID = si.InvoiceID AND sct.CustomerID = si.CustomerID
+			GROUP BY si.CustomerID, wsi.StockItemID, wsi.UnitPrice ) as temp
+		WHERE temp.Helper <= 2
+	)
 
+SELECT 
+	infExludingInvoiceDateCTE.CustomerID,
+	infExludingInvoiceDateCTE.CustomerName,
+	infExludingInvoiceDateCTE.StockItemID,
+	infExludingInvoiceDateCTE.UnitPrice,
+	tempData.InvoiceDate
+FROM StockItemAndClientInformationDataCTE AS infExludingInvoiceDateCTE
+CROSS APPLY (SELECT TOP 1 *
+				FROM StockItemAndClientInformationWithInvoiceDateCTE AS siciCTE
+				WHERE siciCTE.Helper <= 2
+				AND siciCTE.Helper = infExludingInvoiceDateCTE.Helper 
+				AND siciCTE.CustomerID = infExludingInvoiceDateCTE.CustomerID ) AS tempData
 
 GO
-- CROSS APPLY
 напишите здесь свое решение
