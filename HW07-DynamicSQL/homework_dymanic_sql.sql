@@ -18,8 +18,10 @@ InvoiceMonth | Aakriti Byrraju    | Abel Spirlea       | Abel Tatarescu | ... (Ð
 GO
 
 -- Variables;
-DECLARE @dynamicSqlCommand AS NVARCHAR(MAX)
-DECLARE @ColumnName AS NVARCHAR(MAX)
+DECLARE 
+	@dynamicSqlCommand AS NVARCHAR(MAX),
+	@ColumnName AS NVARCHAR(MAX),
+	@sort AS NVARCHAR(MAX)
 
 ;WITH 
 	InvoicesByCustomersDataCTE AS 
@@ -44,7 +46,7 @@ SELECT
 FROM UniqueCustomerNamesCTE as dataCustomerNamesCTE
 
 --SELECT @ColumnName AS ColumnName
-
+SET @sort = N'pvt.InvoiceMonth'
 SET @dynamicSqlCommand = 
 N';WITH 
 	InvoicesByCustomersDataCTE AS 
@@ -70,7 +72,7 @@ N'SELECT pvt.InvoiceMonth, '
 	PIVOT(
 	COUNT(ibcCTE.InvoiceID) FOR ibcCTE.CustomerName
 IN(' + @ColumnName + ')) AS pvt
-ORDER BY YEAR(pvt.InvoiceMonth), MONTH(pvt.InvoiceMonth)'
+ORDER BY '+ N'YEAR(' + @sort + '),' + N'MONTH(' + @sort + ')'
 
 --SELECT @dynamicSqlCommand AS dynamicSqlCommand
 EXEC sp_executesql @dynamicSqlCommand
