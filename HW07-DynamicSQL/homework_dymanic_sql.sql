@@ -44,8 +44,9 @@ DECLARE
 SELECT 
 	@ColumnName = ISNULL(@ColumnName + ',', '') + QUOTENAME(dataCustomerNamesCTE.UniqueCustomerName)
 FROM UniqueCustomerNamesCTE as dataCustomerNamesCTE
-
+ORDER BY dataCustomerNamesCTE.UniqueCustomerName
 --SELECT @ColumnName AS ColumnName
+
 SET @sort = N'pvt.InvoiceMonth'
 SET @dynamicSqlCommand = 
 N';WITH 
