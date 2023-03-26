@@ -64,7 +64,7 @@ PIVOT(
 		[Gasport, NY],
 		[Jessie, ND])
 	) AS pvt
-ORDER BY MONTH(pvt.InvoiceMonth), YEAR(pvt.InvoiceMonth)
+ORDER BY YEAR(pvt.InvoiceMonth), MONTH(pvt.InvoiceMonth)
 
 GO
 
