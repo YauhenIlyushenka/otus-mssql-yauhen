@@ -224,4 +224,3 @@ CROSS APPLY (SELECT TOP 1 *
 				AND siciCTE.CustomerID = infExludingInvoiceDateCTE.CustomerID ) AS tempData
 
 GO
-напишите здесь свое решение
