@@ -28,7 +28,7 @@ DECLARE
 	(
 		SELECT
 			si.InvoiceID,
-			FORMAT (DATEADD(MONTH, DATEDIFF(month, 0, si.InvoiceDate), 0), 'dd.MM.yyyy') AS InvoiceMonth,
+			FORMAT (DATEADD(MONTH, DATEDIFF(month, 0, si.InvoiceDate), 0), 'yyyy-MM-dd') AS InvoiceMonth,
 			sc.CustomerName
 		FROM [Sales].[Invoices] AS si
 		JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
@@ -54,7 +54,7 @@ N';WITH
 	(
 		SELECT
 			si.InvoiceID,
-			FORMAT (DATEADD(MONTH, DATEDIFF(month, 0, si.InvoiceDate), 0), ''dd.MM.yyyy'') AS InvoiceMonth,
+			FORMAT (DATEADD(MONTH, DATEDIFF(month, 0, si.InvoiceDate), 0), ''yyyy-MM-dd'') AS InvoiceMonth,
 			sc.CustomerName
 		FROM [Sales].[Invoices] AS si
 		JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
@@ -67,7 +67,8 @@ N';WITH
 		JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
 	) ' 
 + 
-N'SELECT pvt.InvoiceMonth, '
+N'SELECT 
+FORMAT (DATEADD(MONTH, DATEDIFF(month, 0, pvt.InvoiceMonth), 0), ''dd.MM.yyyy'') AS InvoiceMonth,'
 + @ColumnName +
 ' FROM InvoicesByCustomersDataCTE AS ibcCTE
 	PIVOT(
