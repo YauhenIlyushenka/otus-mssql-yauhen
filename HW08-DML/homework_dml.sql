@@ -106,7 +106,18 @@ GO
 3. Изменить одну запись, из добавленных через UPDATE
 */
 
-напишите здесь свое решение
+GO
+DECLARE 
+	@MaxNewCustomerId AS INT;
+SET @MaxNewCustomerId = (SELECT MAX(CustomerID) FROM [Sales].[NewCustomers])
+
+UPDATE [Sales].[Customers]
+SET AccountOpenedDate = '2023-03-29',
+	DeliveryCityID = 31564,
+	PostalCityID = 31564
+WHERE CustomerID = @MaxNewCustomerId
+
+GO
 
 /*
 4. Написать MERGE, который вставит запись в клиенты, если ее там нет, и изменит если она уже есть
