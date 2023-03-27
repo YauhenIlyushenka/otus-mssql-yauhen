@@ -264,8 +264,52 @@ WHEN NOT MATCHED
 	OUTPUT deleted.*, $action, inserted.*;
 
 GO
+
 /*
 5. Напишите запрос, который выгрузит данные через bcp out и загрузить через bulk insert
 */
 
-напишите здесь свое решение
+GO
+
+SELECT @@SERVERNAME
+
+-- To allow advanced options to be changed.  
+EXEC sp_configure 'show advanced options', 1;  
+GO  
+-- To update the currently configured value for advanced options.  
+RECONFIGURE;  
+GO  
+-- To enable the feature.  
+EXEC sp_configure 'xp_cmdshell', 1;  
+GO  
+-- To update the currently configured value for this feature.  
+RECONFIGURE;  
+GO  
+
+exec master..xp_cmdshell 'bcp "[WideWorldImporters].Sales.NewCustomers" out "D:\NewCustomers1.txt" -T -w -t"@eu&$1&" -S DESKTOP-F78DP0V'
+
+CREATE TABLE [Sales].[NewCustomers_Bulk]
+(
+	[CustomerID] [int] NOT NULL
+)
+
+BULK INSERT [WideWorldImporters].[Sales].[NewCustomers_Bulk]
+				   FROM "D:\NewCustomers1.txt"
+				   WITH 
+					 (
+						BATCHSIZE = 1000, 
+						DATAFILETYPE = 'widechar',
+						FIELDTERMINATOR = '@eu&$1&',
+						ROWTERMINATOR ='\n',
+						KEEPNULLS,
+						TABLOCK        
+					  );
+/*
+SELECT 
+	COUNT(*) 
+FROM [Sales].[NewCustomers_Bulk];
+*/
+
+GO
+
+
