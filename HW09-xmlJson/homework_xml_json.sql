@@ -41,7 +41,125 @@ USE WideWorldImporters;
 Сделать два варианта: с помощью OPENXML и через XQuery.
 */
 
--- напишите здесь свое решение
+-- The first way is OPENXML
+
+GO
+
+DECLARE @xmlDocument XML;
+
+SELECT @xmlDocument = BulkColumn
+FROM OPENROWSET
+(BULK 'D:\SQL\OtusSqlDev\otus-mssql-yauhen\HW09-xmlJson\StockItems.xml', 
+ SINGLE_CLOB)
+AS data;
+
+-- Checking
+--SELECT @xmlDocument AS [@xmlDocument];
+
+DECLARE @docHandle INT;
+EXEC sp_xml_preparedocument @docHandle OUTPUT, @xmlDocument;
+
+--SELECT @docHandle AS docHandle;
+DROP TABLE IF EXISTS #StockItemsInserted;
+
+CREATE TABLE #StockItemsInserted(
+	[StockItemName] NVARCHAR(100) NOT NULL,
+	[SupplierID] INT NOT NULL,
+	[UnitPackageID] INT NOT NULL,
+	[OuterPackageID] INT NOT NULL,
+	[QuantityPerOuter] INT NOT NULL,
+	[TypicalWeightPerUnit] DECIMAL(18, 3) NOT NULL,
+	[LeadTimeDays] INT NOT NULL,
+	[IsChillerStock] BIT NOT NULL,
+	[TaxRate] DECIMAL(18, 3) NOT NULL,
+	[UnitPrice] DECIMAL(18, 2) NOT NULL
+);
+
+INSERT INTO #StockItemsInserted
+SELECT *
+FROM OPENXML(@docHandle, N'/StockItems/Item')
+WITH ( 
+	[StockItemName] NVARCHAR(100) '@Name',
+	[SupplierID] INT 'SupplierID',
+	[UnitPackageID] INT 'Package/UnitPackageID',
+	[OuterPackageID] INT 'Package/OuterPackageID',
+	[QuantityPerOuter] INT 'Package/QuantityPerOuter',
+	[TypicalWeightPerUnit] DECIMAL(18, 3) 'Package/TypicalWeightPerUnit',
+	[LeadTimeDays] INT 'LeadTimeDays',
+	[IsChillerStock] BIT 'IsChillerStock',
+	[TaxRate] DECIMAL(18, 3) 'TaxRate',
+	[UnitPrice] DECIMAL(18, 2) 'UnitPrice');
+
+-- Removing handle
+EXEC sp_xml_removedocument @docHandle;
+
+--SELECT * FROM #StockItemsInserted;
+
+MERGE [Warehouse].[StockItems] AS target
+USING (SELECT * FROM #StockItemsInserted) AS source
+	ON (target.StockItemName = source.StockItemName COLLATE SQL_Latin1_General_CP1_CI_AS)
+WHEN MATCHED 
+	THEN UPDATE SET [SupplierID] = source.SupplierID,
+					[UnitPackageID] = source.UnitPackageID,
+					[OuterPackageID] = source.OuterPackageID,
+					[QuantityPerOuter] = source.QuantityPerOuter,
+					[TypicalWeightPerUnit] = source.TypicalWeightPerUnit,
+					[LeadTimeDays] = source.LeadTimeDays,
+					[IsChillerStock] = source.IsChillerStock,
+					[TaxRate] = source.TaxRate,
+					[UnitPrice] = source.UnitPrice
+WHEN NOT MATCHED
+	THEN INSERT (
+		[StockItemName],
+		[SupplierID],
+		[ColorID],
+		[UnitPackageID],
+		[OuterPackageID],
+		[Brand],
+		[Size],
+		[LeadTimeDays],
+		[QuantityPerOuter],
+		[IsChillerStock],
+		[Barcode],
+		[TaxRate],
+		[UnitPrice],
+		[RecommendedRetailPrice],
+		[TypicalWeightPerUnit],
+		[MarketingComments],
+		[InternalComments],
+		[Photo],
+		[CustomFields],
+		[LastEditedBy])
+	VALUES (
+		source.StockItemName,
+		source.SupplierID,
+		NULL,
+		source.UnitPackageID,
+		source.OuterPackageID,
+		NULL,
+		NULL,
+		source.LeadTimeDays,
+		source.QuantityPerOuter,
+		source.IsChillerStock,
+		NULL,
+		source.TaxRate,
+		source.UnitPrice,
+		NULL,
+		source.TypicalWeightPerUnit,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		2
+	);
+
+DROP TABLE IF EXISTS #StockItemsInserted;
+
+GO
+
+-- The second way is OPENXML
+
+
 
 /*
 2. Выгрузить данные из таблицы StockItems в такой же xml-файл, как StockItems.xml
