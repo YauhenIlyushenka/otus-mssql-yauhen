@@ -157,7 +157,92 @@ DROP TABLE IF EXISTS #StockItemsInserted;
 
 GO
 
--- The second way is OPENXML
+-- The second way is XQuery
+
+GO 
+
+DECLARE @x XML;
+SET @x = (SELECT * FROM OPENROWSET (BULK 'D:\SQL\OtusSqlDev\otus-mssql-yauhen\HW09-xmlJson\StockItems.xml', SINGLE_BLOB)  AS d);
+
+;WITH TemporaryResultCTE AS
+(
+	SELECT  
+	  temporaryRow.Item.value('(@Name)[1]', 'NVARCHAR(100)') AS [StockItemName],
+	  temporaryRow.Item.value('(SupplierID)[1]', 'INT') AS [SupplierID],
+	  temporaryRow.Item.value('(Package/UnitPackageID)[1]', 'INT') AS [UnitPackageID],
+	  temporaryRow.Item.value('(Package/OuterPackageID)[1]', 'INT') AS [OuterPackageID],
+	  temporaryRow.Item.value('(Package/QuantityPerOuter)[1]', 'INT') AS [QuantityPerOuter],
+	  temporaryRow.Item.value('(Package/TypicalWeightPerUnit)[1]', 'DECIMAL(18, 3)') AS [TypicalWeightPerUnit],
+	  temporaryRow.Item.value('(LeadTimeDays)[1]', 'INT') AS [LeadTimeDays],
+	  temporaryRow.Item.value('(IsChillerStock)[1]', 'BIT') AS [IsChillerStock],
+	  temporaryRow.Item.value('(TaxRate)[1]', 'DECIMAL(18, 3)') AS [TaxRate],
+	  temporaryRow.Item.value('(UnitPrice)[1]', 'DECIMAL(18, 2)') AS [UnitPrice]
+	FROM @x.nodes('/StockItems/Item') AS temporaryRow(Item)
+)
+
+
+--select * from TemporaryResultCTE
+
+
+MERGE [Warehouse].[StockItems] AS target
+USING (SELECT * FROM TemporaryResultCTE) AS source
+	ON (target.StockItemName = source.StockItemName COLLATE SQL_Latin1_General_CP1_CI_AS)
+WHEN MATCHED 
+	THEN UPDATE SET [SupplierID] = source.SupplierID,
+					[UnitPackageID] = source.UnitPackageID,
+					[OuterPackageID] = source.OuterPackageID,
+					[QuantityPerOuter] = source.QuantityPerOuter,
+					[TypicalWeightPerUnit] = source.TypicalWeightPerUnit,
+					[LeadTimeDays] = source.LeadTimeDays,
+					[IsChillerStock] = source.IsChillerStock,
+					[TaxRate] = source.TaxRate,
+					[UnitPrice] = source.UnitPrice
+WHEN NOT MATCHED
+	THEN INSERT (
+		[StockItemName],
+		[SupplierID],
+		[ColorID],
+		[UnitPackageID],
+		[OuterPackageID],
+		[Brand],
+		[Size],
+		[LeadTimeDays],
+		[QuantityPerOuter],
+		[IsChillerStock],
+		[Barcode],
+		[TaxRate],
+		[UnitPrice],
+		[RecommendedRetailPrice],
+		[TypicalWeightPerUnit],
+		[MarketingComments],
+		[InternalComments],
+		[Photo],
+		[CustomFields],
+		[LastEditedBy])
+	VALUES (
+		source.StockItemName,
+		source.SupplierID,
+		NULL,
+		source.UnitPackageID,
+		source.OuterPackageID,
+		NULL,
+		NULL,
+		source.LeadTimeDays,
+		source.QuantityPerOuter,
+		source.IsChillerStock,
+		NULL,
+		source.TaxRate,
+		source.UnitPrice,
+		NULL,
+		source.TypicalWeightPerUnit,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		2
+	);
+
+GO
 
 
 
