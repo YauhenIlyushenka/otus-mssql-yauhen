@@ -250,7 +250,19 @@ GO
 2. Выгрузить данные из таблицы StockItems в такой же xml-файл, как StockItems.xml
 */
 
--- напишите здесь свое решение
+SELECT 
+	[StockItemName] AS [@Name],
+	[SupplierID] AS [SupplierID],
+	[UnitPackageID] AS [Package/UnitPackageID],
+	[OuterPackageID] AS [Package/OuterPackageID],
+	[QuantityPerOuter] AS [Package/QuantityPerOuter],
+	[TypicalWeightPerUnit] AS [Package/TypicalWeightPerUnit],
+	[LeadTimeDays] AS [LeadTimeDays],
+	[IsChillerStock] AS [IsChillerStock],
+	[TaxRate] AS [TaxRate],
+	[UnitPrice] AS [UnitPrice]
+FROM [Warehouse].[StockItems]
+FOR XML PATH('Item'), ROOT('StockItems')
 
 /*
 3. В таблице Warehouse.StockItems в колонке CustomFields есть данные в JSON.
