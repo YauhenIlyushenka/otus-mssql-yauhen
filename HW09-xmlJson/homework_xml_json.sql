@@ -276,7 +276,6 @@ GO
 */
 
 GO
---{ "CountryOfManufacture": "China", "Tags": ["USB Powered"] }
 
 SELECT 
 	ws.StockItemID,
@@ -306,4 +305,42 @@ GO
 ... where ... CustomFields like '%Vintage%' 
 */
 
--- напишите здесь свое решение
+GO
+
+;WITH 
+	VintageStockItemsInformationCTE (StockItemID, StockItemName) AS 
+	(
+		SELECT 
+			ws.StockItemID,
+			ws.StockItemName
+		FROM [Warehouse].[StockItems]AS  ws
+		CROSS APPLY OPENJSON(ws.CustomFields, '$.Tags') tags
+		WHERE tags.[value] = 'Vintage'
+	),
+	TagsForStockItemsCTE (StockItemID, StockItemName, TagName) AS
+	(
+		SELECT 
+			ws.StockItemID,
+			ws.StockItemName,
+			tags.Value
+		FROM [Warehouse].[StockItems] AS ws
+		INNER JOIN VintageStockItemsInformationCTE AS CTE ON CTE.StockItemID = ws.StockItemID
+		CROSS APPLY OPENJSON(ws.CustomFields, '$.Tags') tags
+	),
+	ResultCTE (StockItemId, StockItemName, AllTags) AS 
+	(
+		SELECT
+			tagsInfo.StockItemID,
+			tagsInfo.StockItemName,
+			STRING_AGG(tagsInfo.TagName , ',') AS AllTags
+		FROM TagsForStockItemsCTE AS tagsInfo
+		GROUP BY tagsInfo.StockItemID, tagsInfo.StockItemName
+	)
+
+SELECT
+	result.StockItemId,
+	result.StockItemName,
+	result.AllTags
+FROM ResultCTE AS result
+
+GO
