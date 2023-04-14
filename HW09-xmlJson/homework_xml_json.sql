@@ -282,7 +282,7 @@ SELECT
 	ws.StockItemID,
 	ws.StockItemName,
 	JSON_VALUE(ws.CustomFields, '$.CountryOfManufacture') AS CountryOfManufacture,
-	JSON_VALUE(ws.CustomFields, '$.Tags[0]')
+	JSON_VALUE(ws.CustomFields, '$.Tags[0]') as FirstTag
 FROM [Warehouse].[StockItems] as ws
 
 GO
