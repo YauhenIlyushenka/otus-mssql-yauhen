@@ -244,11 +244,11 @@ WHEN NOT MATCHED
 
 GO
 
-
-
 /*
 2. Выгрузить данные из таблицы StockItems в такой же xml-файл, как StockItems.xml
 */
+
+GO
 
 SELECT 
 	[StockItemName] AS [@Name],
@@ -264,6 +264,8 @@ SELECT
 FROM [Warehouse].[StockItems]
 FOR XML PATH('Item'), ROOT('StockItems')
 
+GO
+
 /*
 3. В таблице Warehouse.StockItems в колонке CustomFields есть данные в JSON.
 Написать SELECT для вывода:
@@ -273,7 +275,17 @@ FOR XML PATH('Item'), ROOT('StockItems')
 - FirstTag (из поля CustomFields, первое значение из массива Tags)
 */
 
--- напишите здесь свое решение
+GO
+--{ "CountryOfManufacture": "China", "Tags": ["USB Powered"] }
+
+SELECT 
+	ws.StockItemID,
+	ws.StockItemName,
+	JSON_VALUE(ws.CustomFields, '$.CountryOfManufacture') AS CountryOfManufacture,
+	JSON_VALUE(ws.CustomFields, '$.Tags[0]')
+FROM [Warehouse].[StockItems] as ws
+
+GO
 
 /*
 4. Найти в StockItems строки, где есть тэг "Vintage".
