@@ -33,35 +33,33 @@ ADD CONSTRAINT [PK_Colors] PRIMARY KEY CLUSTERED ([ColorID] ASC)
 GO
 
 GO
+PRINT N'Creating table Brands'
+GO
+
+CREATE TABLE [Car].[Brands] (
+	BrandID INT NOT NULL IDENTITY(1,1),
+	[Description] NVARCHAR(100) NOT NULL
+);
+GO
+ALTER TABLE [Car].[Brands] 
+ADD CONSTRAINT [PK_Brands] PRIMARY KEY CLUSTERED ([BrandID] ASC)
+GO
+
+GO
 PRINT N'Creating table Models'
 GO
 
 CREATE TABLE [Car].[Models] (
 	ModelID BIGINT NOT NULL IDENTITY(1,1),
+	BrandID INT NOT NULL,
 	[Description] NVARCHAR(100) NOT NULL
 );
-
 GO
 ALTER TABLE [Car].[Models] 
 ADD CONSTRAINT [PK_Models] PRIMARY KEY CLUSTERED ([ModelID] ASC)
+ALTER TABLE [Car].[Models]
+ADD CONSTRAINT FK_Models_Brands FOREIGN KEY (BrandID) REFERENCES [Car].[Brands] (BrandID)
 GO
-
-GO
-PRINT N'Creating table Brands'
-GO
-
-CREATE TABLE Car.Brands (
-	BrandID INT NOT NULL IDENTITY(1,1),
-	ModelID BIGINT NOT NULL,
-	[Description] NVARCHAR(100) NOT NULL
-);
-
-GO
-ALTER TABLE [Car].[Brands] 
-ADD CONSTRAINT [PK_Brands] PRIMARY KEY CLUSTERED ([BrandID] ASC)
-GO
-ALTER TABLE [Car].[Brands]
-ADD CONSTRAINT FK_Brands_Models FOREIGN KEY (ModelID) REFERENCES [Car].[Models] (ModelID)
 
 GO
 PRINT N'Creating table Cars'
@@ -69,7 +67,7 @@ GO
 
 CREATE TABLE [Car].[Cars] (
 	CarID BIGINT NOT NULL IDENTITY(1,1),
-	BrandID INT NOT NULL, 
+	ModelID BIGINT NOT NULL, 
 	ColorID INT NOT NULL,
 	RaliseDate DATETIME2
 )
@@ -79,7 +77,7 @@ ALTER TABLE [Car].[Cars]
 ADD CONSTRAINT [PK_Cars] PRIMARY KEY CLUSTERED ([CarID] ASC)
 GO
 ALTER TABLE [Car].[Cars]
-ADD CONSTRAINT FK_Cars_Brands FOREIGN KEY (BrandID) REFERENCES [Car].[Brands] (BrandID)
+ADD CONSTRAINT FK_Cars_Models FOREIGN KEY (ModelID) REFERENCES [Car].[Models] (ModelID)
 GO
 ALTER TABLE [Car].[Cars]
 ADD CONSTRAINT FK_Cars_Colors FOREIGN KEY (ColorID) REFERENCES [Car].[Colors] (ColorID)
