@@ -105,7 +105,7 @@ CREATE TABLE Insurance.Insurances (
 	InsuranceID BIGINT NOT NULL IDENTITY(1,1),
 	CarID BIGINT NOT NULL,
 	CompanyID INT NOT NULL,
-	[Year] INT NOT NULL,
+	StartedDate DATETIME2 NOT NULL,
 	Price DECIMAL(18,3)
 )
 
