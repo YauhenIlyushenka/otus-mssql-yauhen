@@ -106,6 +106,7 @@ CREATE TABLE Insurance.Insurances (
 	CarID BIGINT NOT NULL,
 	CompanyID INT NOT NULL,
 	StartedDate DATETIME2 NOT NULL,
+	FinishedDate DATETIME2 NOT NULL,
 	Price DECIMAL(18,3)
 )
 
