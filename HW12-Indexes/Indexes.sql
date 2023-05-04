@@ -25,3 +25,8 @@ PRINT N'Creating index [IX_Contracts_ClientID] on [Deal].[Contracts]'
 GO
 CREATE NONCLUSTERED INDEX [IX_Contracts_ClientID] ON [Deal].[Contracts] ([ClientID])
 GO
+
+GO
+CREATE NONCLUSTERED INDEX [IX_Contracts_ClientID_CarID] ON [Deal].[Contracts] ([ClientID]) INCLUDE ([CarID])
+
+--drop INDEX [IX_Contracts_CarID_ClientID] ON [Deal].[Contracts]
