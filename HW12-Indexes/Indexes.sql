@@ -1,36 +1,17 @@
 USE RentalFirm
 GO
 
---SELECT SERVERPROPERTY('IsFullTextInstalled')
---EXEC sp_fulltext_database 'Enable'
---SELECT * FROM sys.fulltext_catalogs
---SELECT name as [DBName], is_fulltext_enabled
---FROM sys.databases
-
---SELECT LCID, NAME
---FROM 
---SYS.FULLTEXT_LANGUAGES;
-
---EXEC sp_configure 'default full-text language' --1033
-
-CREATE FULLTEXT CATALOG [RentalFirm_BrandsCatalog]
-WITH ACCENT_SENSITIVITY = ON AS DEFAULT
+ALTER TABLE [Car].[Brands]
+ADD CONSTRAINT UQ_Brands_Description UNIQUE (Description);
 GO
 
-IF NOT EXISTS(
-	SELECT * FROM [sys].[fulltext_indexes]
-	WHERE [object_id] = object_id('[Car].[Brands]'))
-BEGIN
-	CREATE FULLTEXT INDEX
-	ON [Car].[Brands]
-	(
-		[Description] LANGUAGE 1033
-	)
-	KEY INDEX [PK_Brands]
-	ON [RentalFirm_BrandsCatalog]
-	WITH STOPLIST OFF;
-END
-GO
+PRINT N'Creating some non clustered indexes on FKs'
 
---ALTER FULLTEXT INDEX ON [Car].[Brands]
---START FULL POPULATION;
+PRINT N'Creating index [IX_Cars_ModelID] on [Car].[Cars]'
+GO
+CREATE NONCLUSTERED INDEX [IX_Cars_ModelID] ON [Car].[Cars] ([ModelID])
+
+PRINT N'Creating index [IX_Models_BrandID] on [Car].[Models]'
+GO
+CREATE NONCLUSTERED INDEX [IX_Models_BrandID] ON [Car].[Models] ([BrandID])
+GO
