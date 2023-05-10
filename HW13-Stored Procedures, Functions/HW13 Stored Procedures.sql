@@ -19,6 +19,7 @@ AS
 		ORDER BY SUM(sil.Quantity * sil.UnitPrice) DESC
 	);
 GO
+--SELECT * FROM Customers.GetCustomerWithMaxPriceOfPurchases()
 
 -- 2 Task
 CREATE PROCEDURE [Customers].[GetSumPriceOfPurchasesByCustomer]
@@ -45,6 +46,49 @@ AS
 	END
 GO 
 
---exec [Customers].[GetSumPriceOfPurchasesByCustomer] @customerID = 0
---SELECT * FROM Customers.GetCustomerWithMaxPriceOfPurchases()
+--exec [Customers].[GetSumPriceOfPurchasesByCustomer] @customerID = 1
+
+-- 3 Task
+-- Create Stored Procedure [Customers].[GetCountInvoicesByCustomer]
+CREATE PROCEDURE [Customers].[GetCountInvoicesByCustomer]
+	@CustomerId INT 
+AS   
+    SET NOCOUNT ON;
+	BEGIN
+		BEGIN TRY
+		BEGIN TRANSACTION
+			SELECT
+				COUNT(si.InvoiceID) as InvoiceCount
+			FROM [Sales].[Invoices] AS si
+			JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+			WHERE sc.CustomerID = @customerId
+			GROUP BY sc.CustomerID
+			if @@trancount > 0 COMMIT TRANSACTION;
+		END TRY
+		BEGIN CATCH
+			DECLARE @err NVARCHAR(4000) = error_message();
+			if @@trancount > 0 ROLLBACK TRAN;
+			RAISERROR(@err, 16, 10);
+		END CATCH
+	END
+GO 
+-- Create Function [Customers].[GetCountInvoicesByCustomersFunction]
+CREATE FUNCTION Customers.GetCountInvoicesByCustomersFunction(@CustomerID INT)
+RETURNS INT
+AS
+BEGIN
+    DECLARE @InvoiceCount INT;
+
+    SELECT 
+		@InvoiceCount = COUNT(si.InvoiceID)
+    FROM [Sales].[Invoices] AS si
+	JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
+    WHERE sc.CustomerID = @CustomerID;
+
+    RETURN @InvoiceCount;
+END;
+GO
+
+exec [Customers].[GetCountInvoicesByCustomer] @CustomerID = 1
+
 --drop procedure [Customers].[GetSumPriceOfPurchasesByCustomer]
