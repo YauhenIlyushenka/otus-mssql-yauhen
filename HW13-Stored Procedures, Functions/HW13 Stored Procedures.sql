@@ -94,3 +94,10 @@ GO
 --declare @customerID int;
 --set @customerID = 1
 --select Customers.GetCountInvoicesByCustomersFunction(@customerID) as CountInvoices
+
+--Task 4
+SELECT 
+	sc.CustomerID,
+	sc.CustomerName,
+	Customers.GetCountInvoicesByCustomersFunction(sc.CustomerID) AS CountInvoices
+FROM [Sales].[Customers] AS sc
