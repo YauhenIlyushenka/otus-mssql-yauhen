@@ -89,6 +89,8 @@ BEGIN
 END;
 GO
 
-exec [Customers].[GetCountInvoicesByCustomer] @CustomerID = 1
+--exec [Customers].[GetCountInvoicesByCustomer] @CustomerID = 1
 
---drop procedure [Customers].[GetSumPriceOfPurchasesByCustomer]
+--declare @customerID int;
+--set @customerID = 1
+--select Customers.GetCountInvoicesByCustomersFunction(@customerID) as CountInvoices
