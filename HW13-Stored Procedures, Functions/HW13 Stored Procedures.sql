@@ -36,7 +36,7 @@ AS
 			JOIN [Sales].[InvoiceLines] AS sil ON sil.InvoiceID = si.InvoiceID
 			WHERE sc.CustomerID = @customerId
 			GROUP BY sc.CustomerID
-			if @@trancount > 0 COMMIT TRANSACTION;
+		COMMIT TRANSACTION;
 		END TRY
 		BEGIN CATCH
 			DECLARE @err NVARCHAR(4000) = error_message();
@@ -63,7 +63,7 @@ AS
 			JOIN [Sales].[Customers] AS sc ON sc.CustomerID = si.CustomerID
 			WHERE sc.CustomerID = @customerId
 			GROUP BY sc.CustomerID
-			if @@trancount > 0 COMMIT TRANSACTION;
+		COMMIT TRANSACTION;
 		END TRY
 		BEGIN CATCH
 			DECLARE @err NVARCHAR(4000) = error_message();
