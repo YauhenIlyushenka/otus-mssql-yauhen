@@ -77,6 +77,8 @@ GO
 
 -- 4.The forth step.
 -- Create stored procedure, which added the message in queue;
+
+--drop procedure Sales.CreateNewReport
 CREATE PROCEDURE Sales.CreateNewReport
 	@CustomerId INT,
 	@StartedDate DATETIME2,
@@ -102,7 +104,7 @@ BEGIN
 			INNER JOIN  Sales.Orders AS so ON so.OrderID = si.OrderID
 			WHERE si.CustomerID = @CustomerId AND si.InvoiceDate BETWEEN @StartedDate AND @FinishedDate
 			GROUP BY si.CustomerID
-			FOR XML AUTO, root('RequestMessage')
+			FOR XML PATH('Cusotmer'), ROOT('RequestMessage')
 		); 
 	
 		-- Determine the Initiator Service, Target Service and the Contract 
@@ -133,7 +135,91 @@ BEGIN
 END
 GO
 
--- 5.The fifth step.
+--5. The fifth step.
+-- Create activation stored procedures;
+
+--drop procedure Sales.SaveNewReport
+CREATE PROCEDURE Sales.SaveNewReport
+AS
+BEGIN
+
+	DECLARE @TargetDlgHandle UNIQUEIDENTIFIER,
+			@Message NVARCHAR(4000),
+			@MessageType Sysname,
+			@ReplyMessage NVARCHAR(4000),
+			@ReplyMessageName Sysname,
+			@CusotmerID INT,
+			@OrdersCount INT,
+			@StartedDate DATETIME2,
+			@FinishedDate DATETIME2,
+			@xml XML; 
+	
+	BEGIN TRY
+	BEGIN TRANSACTION;
+
+		--Receive message from Initiator
+		RECEIVE TOP(1)
+			@TargetDlgHandle = Conversation_Handle,
+			@Message = Message_Body,
+			@MessageType = Message_Type_Name
+		FROM dbo.TargetQueueWWI; 
+
+		--SELECT @Message;
+
+		SET @xml = CAST(@Message AS XML);
+
+		SELECT 
+			@CusotmerID = temporaryRow.Customer.value('(CustomerID)[1]', 'INT'),
+			@OrdersCount = temporaryRow.Customer.value('(OrdersCount)[1]', 'INT'),
+			@StartedDate = temporaryRow.Customer.value('(StartedDate)[1]', 'DATETIME2'),
+			@FinishedDate = temporaryRow.Customer.value('(FinishedDate)[1]', 'DATETIME2')
+		FROM @xml.nodes('/RequestMessage/Customer') AS temporaryRow(Customer);
+
+		BEGIN
+			INSERT INTO Sales.Reports 
+			(
+				CustomerId,
+				OrdersCount,
+				StartedDate,
+				FinishedDate
+			)
+			VALUES 
+			(
+				@CusotmerID,
+				@OrdersCount,
+				@StartedDate,
+				@FinishedDate
+			)
+		END;
+	
+		--SELECT @Message AS ReceivedRequestMessage, @MessageType; 
+	
+		-- Confirm and Send a reply
+		IF @MessageType=N'//WWI/SB/RequestMessage'
+		BEGIN
+			SET @ReplyMessage =N'<ReplyMessage> Message received</ReplyMessage>'; 
+	
+			SEND ON CONVERSATION @TargetDlgHandle
+			MESSAGE TYPE
+			[//WWI/SB/ReplyMessage]
+			(@ReplyMessage);
+			END CONVERSATION @TargetDlgHandle;
+		END 
+	
+	--SELECT @ReplyMessage AS SentReplyMessage; 
+
+	COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		DECLARE @err NVARCHAR(4000) = error_message();
+		if @@trancount > 0 ROLLBACK TRAN;
+		RAISERROR(@err, 16, 10);
+	END CATCH
+END
+
+
+
+--6. The 6 step.
 -- After setup, which we mentioned above, we always use only our Initial and Target queues.
 ALTER QUEUE [dbo].[InitiatorQueueWWI] 
 	WITH STATUS = ON, -- TURN ON or TURN OFF queue. If queue is turned OFF, we can't send anything to queue. (We sent message, but queue wasn't save this message)
@@ -142,7 +228,7 @@ ALTER QUEUE [dbo].[InitiatorQueueWWI]
 	ACTIVATION 
 	(   
 		STATUS = ON, -- turn ON or OFF Handling of messages from queue;
-        PROCEDURE_NAME = Sales.ConfirmInvoice, -- There are stored procedure activation in DB, in which is happened to handling of message which is stayed in queue;
+        PROCEDURE_NAME = Sales.ConfirmSavingReport, -- There are stored procedure activation in DB, in which is happened to handling of message which is stayed in queue;
 		MAX_QUEUE_READERS = 1, -- The count of handlers for queue. It can be more then 1. (It dependents on loading)
 		EXECUTE AS OWNER
 	); 
@@ -155,7 +241,7 @@ ALTER QUEUE [dbo].[TargetQueueWWI]
 	ACTIVATION 
 	(  
 		STATUS = ON,
-        PROCEDURE_NAME = Sales.GetNewInvoice,
+        PROCEDURE_NAME = Sales.SaveNewReport,
 		MAX_QUEUE_READERS = 1,
 		EXECUTE AS OWNER
 	); 
