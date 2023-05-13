@@ -21,7 +21,7 @@ ON ce.service_contract_id = sc.service_contract_id
 ORDER BY conversation_handle;
 */
 
---CleanUP
+--CleanUP conversation
 --DECLARE @Conversation uniqueidentifier;
 
 --WHILE EXISTS(SELECT 1 FROM sys.transmission_queue)
