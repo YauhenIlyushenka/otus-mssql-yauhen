@@ -136,7 +136,7 @@ END
 GO
 
 --5. The fifth step.
--- Create activation stored procedures;
+-- Create activation stored procedures Sales.SaveNewReport AND Sales.ConfirmSavingReport;
 
 --drop procedure Sales.SaveNewReport
 CREATE PROCEDURE Sales.SaveNewReport
@@ -197,7 +197,7 @@ BEGIN
 		-- Confirm and Send a reply
 		IF @MessageType=N'//WWI/SB/RequestMessage'
 		BEGIN
-			SET @ReplyMessage =N'<ReplyMessage> Message received</ReplyMessage>'; 
+			SET @ReplyMessage =N'<ReplyMessage> Message with CustomerID: ' + @CusotmerID + N' received</ReplyMessage>'; 
 	
 			SEND ON CONVERSATION @TargetDlgHandle
 			MESSAGE TYPE
@@ -216,8 +216,37 @@ BEGIN
 		RAISERROR(@err, 16, 10);
 	END CATCH
 END
+GO
 
+--drop procedure Sales.ConfirmSavingReport
+CREATE PROCEDURE Sales.ConfirmSavingReport
+AS
+BEGIN
+	--Receiving Reply Message from the Target.	
+	DECLARE @InitiatorReplyDlgHandle UNIQUEIDENTIFIER,
+			@ReplyReceivedMessage NVARCHAR(1000) 
+	
+	BEGIN TRY
+	BEGIN TRANSACTION; 
 
+		RECEIVE TOP(1)
+			@InitiatorReplyDlgHandle=Conversation_Handle
+			,@ReplyReceivedMessage=Message_Body
+		FROM dbo.InitiatorQueueWWI; 
+		
+		END CONVERSATION @InitiatorReplyDlgHandle; 
+		
+		--SELECT @ReplyReceivedMessage AS ReceivedRepliedMessage; 
+
+	COMMIT TRANSACTION;
+	END TRY
+	BEGIN CATCH
+		DECLARE @err NVARCHAR(4000) = error_message();
+		if @@trancount > 0 ROLLBACK TRAN;
+		RAISERROR(@err, 16, 10);
+	END CATCH
+END
+GO
 
 --6. The 6 step.
 -- After setup, which we mentioned above, we always use only our Initial and Target queues.
@@ -228,7 +257,7 @@ ALTER QUEUE [dbo].[InitiatorQueueWWI]
 	ACTIVATION 
 	(   
 		STATUS = ON, -- turn ON or OFF Handling of messages from queue;
-        PROCEDURE_NAME = Sales.ConfirmSavingReport, -- There are stored procedure activation in DB, in which is happened to handling of message which is stayed in queue;
+		PROCEDURE_NAME = Sales.ConfirmSavingReport, -- There are stored procedure activation in DB, in which is happened to handling of message which is stayed in queue;
 		MAX_QUEUE_READERS = 1, -- The count of handlers for queue. It can be more then 1. (It dependents on loading)
 		EXECUTE AS OWNER
 	); 
