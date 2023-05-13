@@ -241,7 +241,7 @@ ALTER QUEUE [dbo].[TargetQueueWWI]
 	ACTIVATION 
 	(  
 		STATUS = ON,
-        PROCEDURE_NAME = Sales.SaveNewReport,
+		PROCEDURE_NAME = Sales.SaveNewReport,
 		MAX_QUEUE_READERS = 1,
 		EXECUTE AS OWNER
 	); 
