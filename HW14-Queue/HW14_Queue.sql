@@ -32,7 +32,7 @@ ORDER BY conversation_handle;
 --  END CONVERSATION @Conversation WITH CLEANUP;
 --END;
 
---END CONVERSATION 'E4C176F1-B9F1-ED11-9DDC-E470B84B6DDC' with CLEANUP;
+--END CONVERSATION 'B5D6B44B-D5F1-ED11-9DDC-E470B84B6DDC' with CLEANUP;
 
 -- 1. The first step. Enable Service Broker on MS SQL Server
 USE master
@@ -109,7 +109,7 @@ BEGIN
 		-- Prepare the Message
 		SELECT @RequestMessage = (
 			SELECT 
-				si.[CustomerID],
+				si.[CustomerID] as CustomerId,
 				COUNT(so.OrderID) AS [OrdersCount],
 				@StartedDate AS StartedDate, 
 				@FinishedDate AS FinishedDate
@@ -117,7 +117,7 @@ BEGIN
 			INNER JOIN  Sales.Orders AS so ON so.OrderID = si.OrderID
 			WHERE si.CustomerID = @CustomerId AND si.InvoiceDate BETWEEN @StartedDate AND @FinishedDate
 			GROUP BY si.CustomerID
-			FOR XML PATH('Cusotmer'), ROOT('RequestMessage')
+			FOR XML PATH('Customer'), ROOT('RequestMessage')
 		); 
 	
 		-- Determine the Initiator Service, Target Service and the Contract 
@@ -161,7 +161,7 @@ BEGIN
 			@MessageType Sysname,
 			@ReplyMessage NVARCHAR(4000),
 			@ReplyMessageName Sysname,
-			@CusotmerID INT,
+			@CusotmerId INT,
 			@OrdersCount INT,
 			@StartedDate DATETIME2,
 			@FinishedDate DATETIME2,
@@ -179,16 +179,18 @@ BEGIN
 
 		SELECT @Message;
 
-		SET @xml = CAST(@Message AS XML);
-
-		SELECT 
-			@CusotmerID = temporaryRow.Customer.value('(CustomerID)[1]', 'INT'),
-			@OrdersCount = temporaryRow.Customer.value('(OrdersCount)[1]', 'INT'),
-			@StartedDate = temporaryRow.Customer.value('(StartedDate)[1]', 'DATETIME2'),
-			@FinishedDate = temporaryRow.Customer.value('(FinishedDate)[1]', 'DATETIME2')
-		FROM @xml.nodes('/RequestMessage/Customer') AS temporaryRow(Customer);
-
 		BEGIN
+			SET @xml = CAST(@Message AS XML);
+			;with teempResult as 
+			(
+				SELECT 
+					temporaryRow.Customer.value('(CustomerId)[1]', 'INT') as CustomerId,
+					temporaryRow.Customer.value('(OrdersCount)[1]', 'INT') as OrdersCount,
+					temporaryRow.Customer.value('(StartedDate)[1]', 'DATETIME2') as StartedDate,
+					temporaryRow.Customer.value('(FinishedDate)[1]', 'DATETIME2') as FinishedDate
+				FROM @xml.nodes('/RequestMessage/Customer') AS temporaryRow(Customer)
+			)
+
 			INSERT INTO Sales.Reports 
 			(
 				CustomerId,
@@ -196,13 +198,12 @@ BEGIN
 				StartedDate,
 				FinishedDate
 			)
-			VALUES 
-			(
-				@CusotmerID,
-				@OrdersCount,
-				@StartedDate,
-				@FinishedDate
-			)
+			SELECT 
+				temp.CustomerId,
+				temp.OrdersCount,
+				temp.StartedDate,
+				temp.FinishedDate
+			FROM teempResult AS temp
 		END;
 	
 		--SELECT @Message AS ReceivedRequestMessage, @MessageType; 
@@ -210,7 +211,7 @@ BEGIN
 		-- Confirm and Send a reply
 		IF @MessageType=N'//WWI/SB/RequestMessage'
 		BEGIN
-			SET @ReplyMessage =N'<ReplyMessage> Message with CustomerID: ' + @CusotmerID + N' received</ReplyMessage>'; 
+			SET @ReplyMessage =N'<ReplyMessage> Message received</ReplyMessage>'; 
 	
 			SEND ON CONVERSATION @TargetDlgHandle
 			MESSAGE TYPE
@@ -271,7 +272,7 @@ ALTER QUEUE [dbo].[InitiatorQueueWWI]
 	(   
 		STATUS = ON, -- turn ON or OFF Handling of messages from queue;
 		PROCEDURE_NAME = Sales.ConfirmSavingReport, -- There are stored procedure activation in DB, in which is happened to handling of message which is stayed in queue;
-		MAX_QUEUE_READERS = 0, -- The count of handlers for queue. It can be more then 1. (It dependents on loading)
+		MAX_QUEUE_READERS = 1, -- The count of handlers for queue. It can be more then 1. (It dependents on loading)
 		EXECUTE AS OWNER
 	); 
 
@@ -284,13 +285,13 @@ ALTER QUEUE [dbo].[TargetQueueWWI]
 	(  
 		STATUS = ON,
 		PROCEDURE_NAME = Sales.SaveNewReport,
-		MAX_QUEUE_READERS = 0,
+		MAX_QUEUE_READERS = 1,
 		EXECUTE AS OWNER
 	); 
 GO
 
 --exec Sales.CreateNewReport 
---	@CustomerId = 1,
+--	@CustomerId = 2,
 --	@StartedDate = '2013-01-01',
 --	@FinishedDate = '2016-01-01'
 
@@ -300,7 +301,7 @@ GO
 --SELECT CAST(message_body AS XML),*
 --FROM dbo.InitiatorQueueWWI;
 
-----Target
+--Target
 --EXEC Sales.SaveNewReport;
 
 ----Initiator
