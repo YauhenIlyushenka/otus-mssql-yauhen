@@ -63,7 +63,7 @@ CREATE QUEUE TargetQueueWWI;
 -- Create target service, which is binded to this Target queue
 CREATE SERVICE [//WWI/SB/TargetService]
        ON QUEUE TargetQueueWWI
-       ([//WWI/SB/Contract]);
+       ([//WWI/SB/Contract]); --by contract
 GO
 
 -- Create Initiator Queue
@@ -71,5 +71,5 @@ CREATE QUEUE InitiatorQueueWWI;
 -- Create Initiator service, which is binded to this Initiator queue
 CREATE SERVICE [//WWI/SB/InitiatorService]
        ON QUEUE InitiatorQueueWWI
-       ([//WWI/SB/Contract]);
+       ([//WWI/SB/Contract]); -- by contract
 GO
