@@ -89,7 +89,8 @@ BEGIN
 	DECLARE @InitDlgHandle UNIQUEIDENTIFIER;
 	DECLARE @RequestMessage NVARCHAR(4000);
 	
-	BEGIN TRAN 
+	BEGIN TRY
+	BEGIN TRANSACTION 
 		-- Prepare the Message
 		SELECT @RequestMessage = (
 			SELECT 
@@ -120,9 +121,15 @@ BEGIN
 		[//WWI/SB/RequestMessage]
 		(@RequestMessage);
 	
-		SELECT @RequestMessage AS SentRequestMessage;
+		--SELECT @RequestMessage AS SentRequestMessage;
 	
-	COMMIT TRAN 
+	COMMIT TRANSACTION
+	END TRY
+	BEGIN CATCH
+		DECLARE @err NVARCHAR(4000) = error_message();
+		if @@trancount > 0 ROLLBACK TRAN;
+		RAISERROR(@err, 16, 10);
+	END CATCH
 END
 GO
 
