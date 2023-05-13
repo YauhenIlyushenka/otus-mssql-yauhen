@@ -75,7 +75,58 @@ CREATE SERVICE [//WWI/SB/InitiatorService]
        ([//WWI/SB/Contract]); -- by contract
 GO
 
--- 4. The forth step.
+-- 4.The forth step.
+-- Create stored procedure, which added the message in queue;
+CREATE PROCEDURE Sales.CreateNewReport
+	@CustomerId INT,
+	@StartedDate DATETIME2,
+	@FinishedDate DATETIME2
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+    --Sending a Request Message to the Target	
+	DECLARE @InitDlgHandle UNIQUEIDENTIFIER;
+	DECLARE @RequestMessage NVARCHAR(4000);
+	
+	BEGIN TRAN 
+		-- Prepare the Message
+		SELECT @RequestMessage = (
+			SELECT 
+				si.[CustomerID],
+				COUNT(so.OrderID) AS [OrdersCount],
+				@StartedDate AS StartedDate, 
+				@FinishedDate AS FinishedDate
+			FROM [WideWorldImporters].[Sales].[Invoices] AS si
+			INNER JOIN  Sales.Orders AS so ON so.OrderID = si.OrderID
+			WHERE si.CustomerID = @CustomerId AND si.InvoiceDate BETWEEN @StartedDate AND @FinishedDate
+			GROUP BY si.CustomerID
+			FOR XML AUTO, root('RequestMessage')
+		); 
+	
+		-- Determine the Initiator Service, Target Service and the Contract 
+		BEGIN DIALOG @InitDlgHandle
+		FROM SERVICE
+		[//WWI/SB/InitiatorService]
+		TO SERVICE
+		'//WWI/SB/TargetService'
+		ON CONTRACT
+		[//WWI/SB/Contract]
+		WITH ENCRYPTION=OFF; 
+
+		--Send the Message
+		SEND ON CONVERSATION @InitDlgHandle 
+		MESSAGE TYPE
+		[//WWI/SB/RequestMessage]
+		(@RequestMessage);
+	
+		SELECT @RequestMessage AS SentRequestMessage;
+	
+	COMMIT TRAN 
+END
+GO
+
+-- 5.The fifth step.
 -- After setup, which we mentioned above, we always use only our Initial and Target queues.
 ALTER QUEUE [dbo].[InitiatorQueueWWI] 
 	WITH STATUS = ON, -- TURN ON or TURN OFF queue. If queue is turned OFF, we can't send anything to queue. (We sent message, but queue wasn't save this message)
