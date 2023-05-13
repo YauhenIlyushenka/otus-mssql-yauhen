@@ -21,6 +21,19 @@ ON ce.service_contract_id = sc.service_contract_id
 ORDER BY conversation_handle;
 */
 
+--CleanUP
+--DECLARE @Conversation uniqueidentifier;
+
+--WHILE EXISTS(SELECT 1 FROM sys.transmission_queue)
+--BEGIN
+--  SET @Conversation = 
+--                (SELECT TOP(1) conversation_handle 
+--                                FROM sys.transmission_queue);
+--  END CONVERSATION @Conversation WITH CLEANUP;
+--END;
+
+--END CONVERSATION 'E4C176F1-B9F1-ED11-9DDC-E470B84B6DDC' with CLEANUP;
+
 -- 1. The first step. Enable Service Broker on MS SQL Server
 USE master
 ALTER DATABASE WideWorldImporters
@@ -164,7 +177,7 @@ BEGIN
 			@MessageType = Message_Type_Name
 		FROM dbo.TargetQueueWWI; 
 
-		--SELECT @Message;
+		SELECT @Message;
 
 		SET @xml = CAST(@Message AS XML);
 
@@ -258,7 +271,7 @@ ALTER QUEUE [dbo].[InitiatorQueueWWI]
 	(   
 		STATUS = ON, -- turn ON or OFF Handling of messages from queue;
 		PROCEDURE_NAME = Sales.ConfirmSavingReport, -- There are stored procedure activation in DB, in which is happened to handling of message which is stayed in queue;
-		MAX_QUEUE_READERS = 1, -- The count of handlers for queue. It can be more then 1. (It dependents on loading)
+		MAX_QUEUE_READERS = 0, -- The count of handlers for queue. It can be more then 1. (It dependents on loading)
 		EXECUTE AS OWNER
 	); 
 
@@ -271,7 +284,24 @@ ALTER QUEUE [dbo].[TargetQueueWWI]
 	(  
 		STATUS = ON,
 		PROCEDURE_NAME = Sales.SaveNewReport,
-		MAX_QUEUE_READERS = 1,
+		MAX_QUEUE_READERS = 0,
 		EXECUTE AS OWNER
 	); 
 GO
+
+--exec Sales.CreateNewReport 
+--	@CustomerId = 1,
+--	@StartedDate = '2013-01-01',
+--	@FinishedDate = '2016-01-01'
+
+--SELECT CAST(message_body AS XML),*
+--FROM dbo.TargetQueueWWI;
+
+--SELECT CAST(message_body AS XML),*
+--FROM dbo.InitiatorQueueWWI;
+
+----Target
+--EXEC Sales.SaveNewReport;
+
+----Initiator
+--EXEC Sales.ConfirmSavingReport;
