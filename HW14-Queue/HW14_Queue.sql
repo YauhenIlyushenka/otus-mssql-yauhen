@@ -21,7 +21,7 @@ ON ce.service_contract_id = sc.service_contract_id
 ORDER BY conversation_handle;
 */
 
--- Enable Service Broker on MS SQL Server
+-- 1. The first step. Enable Service Broker on MS SQL Server
 USE master
 ALTER DATABASE WideWorldImporters
 SET ENABLE_BROKER WITH ROLLBACK IMMEDIATE;  -- NO WAIT --prod
@@ -35,7 +35,7 @@ ALTER AUTHORIZATION
 --The database owner SID recorded in the master database differs from the database owner SID recorded in database 'WideWorldImporters'. 
 --You should correct this situation by resetting the owner of database 'WideWorldImporters' using the ALTER AUTHORIZATION statement.
 
--- Create MessageTypes for Request and Response;
+-- 2. The second step. Create MessageTypes for Request and Response and Contract for attitude;
 -- The Attitude between services is happened by XML, but you can use format JSON without validation. The validatation is setup only for XML.
 USE WideWorldImporters
 -- For Request
@@ -58,6 +58,7 @@ CREATE CONTRACT [//WWI/SB/Contract] -- contract
       );
 GO
 
+-- 3.The Third step. Create Target and Initial Queues and services henses.
 -- Create Target Queue
 CREATE QUEUE TargetQueueWWI;
 -- Create target service, which is binded to this Target queue
@@ -72,4 +73,32 @@ CREATE QUEUE InitiatorQueueWWI;
 CREATE SERVICE [//WWI/SB/InitiatorService]
        ON QUEUE InitiatorQueueWWI
        ([//WWI/SB/Contract]); -- by contract
+GO
+
+-- 4. The forth step.
+-- After setup, which we mentioned above, we always use only our Initial and Target queues.
+ALTER QUEUE [dbo].[InitiatorQueueWWI] 
+	WITH STATUS = ON, -- TURN ON or TURN OFF queue. If queue is turned OFF, we can't send anything to queue. (We sent message, but queue wasn't save this message)
+	RETENTION = OFF,
+	POISON_MESSAGE_HANDLING (STATUS = OFF), -- The separate feature (separate queue) for messages with some errors, which can't handle and execute
+	ACTIVATION 
+	(   
+		STATUS = ON, -- turn ON or OFF Handling of messages from queue;
+        PROCEDURE_NAME = Sales.ConfirmInvoice, -- There are stored procedure activation in DB, in which is happened to handling of message which is stayed in queue;
+		MAX_QUEUE_READERS = 1, -- The count of handlers for queue. It can be more then 1. (It dependents on loading)
+		EXECUTE AS OWNER
+	); 
+
+GO
+ALTER QUEUE [dbo].[TargetQueueWWI] 
+	WITH STATUS = ON,
+	RETENTION = OFF,
+	POISON_MESSAGE_HANDLING (STATUS = OFF),
+	ACTIVATION 
+	(  
+		STATUS = ON,
+        PROCEDURE_NAME = Sales.GetNewInvoice,
+		MAX_QUEUE_READERS = 1,
+		EXECUTE AS OWNER
+	); 
 GO
