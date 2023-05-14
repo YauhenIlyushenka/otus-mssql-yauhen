@@ -1,31 +1,66 @@
-/*
-Домашнее задание по курсу MS SQL Server Developer в OTUS.
+USE WideWorldImporters;
+GO
 
-Занятие "13 - CLR".
-*/
+-- Включаем CLR
+EXEC sp_configure 'show advanced options', 1;
+GO
+RECONFIGURE;
+GO
 
-Варианты ДЗ (сделать любой один):
+EXEC sp_configure 'clr enabled', 1;
+EXEC sp_configure 'clr strict security', 0;
+GO
 
-1) Взять готовую dll, подключить ее и продемонстрировать использование. 
-Например, https://sqlsharp.com
+ALTER DATABASE WideWorldImporters SET TRUSTWORTHY ON; 
 
-2) Взять готовые исходники из какой-нибудь статьи, скомпилировать, подключить dll, продемонстрировать использование.
-Например, 
-https://www.sqlservercentral.com/articles/xlsexport-a-clr-procedure-to-export-proc-results-to-excel
+-- Подключаем dll 
+-- Измените путь к файлу!
+CREATE ASSEMBLY MyAssembly
+FROM 'D:\SQL\OtusSqlDev\otus-mssql-yauhen\HW15-CLR\HW15DemoCLR\bin\Debug\HW15DemoCLR.dll'
+WITH PERMISSION_SET = SAFE;  
 
-https://www.mssqltips.com/sqlservertip/1344/clr-string-sort-function-in-sql-server/
+-- DROP ASSEMBLY SimpleDemoAssemblyr
 
-https://habr.com/ru/post/88396/
+-- Файл сборки (dll) на диске больше не нужен, она копируется в БД
 
-3) Написать полностью свое (что-то одно):
-* Тип: JSON с валидацией, IP / MAC - адреса, ...
-* Функция: работа с JSON, ...
-* Агрегат: аналог STRING_AGG, ...
-* (любой ваш вариант)
+-- Как посмотреть зарегистрированные сборки 
 
-Результат ДЗ:
-* исходники (если они есть), желательно проект Visual Studio
-* откомпилированная сборка dll
-* скрипт подключения dll
-* демонстрация использования
+-- SSMS
+-- <DB> -> Programmability -> Assemblies 
+
+-- Посмотреть подключенные сборки (SSMS: <DB> -> Programmability -> Assemblies)
+SELECT * FROM sys.assemblies;
+GO
+
+-- Create CustomType
+CREATE TYPE [dbo].[CustomEmailType] EXTERNAL NAME MyAssembly.[HW15DemoCLR.CustomEmailType];
+GO
+
+-- Executing properly
+DECLARE @email CustomEmailType
+SET @email = 'yauhen@mail.com'
+SELECT 
+	@email AS [Binary], 
+	@email.ToString() AS [EmailByString]
+GO
+
+-- NULL
+DECLARE @email CustomEmailType;
+SELECT 
+	@email AS [Binary], 
+	@email.ToString() AS [EmailByString]
+GO
+
+--Validation with error
+DECLARE @email CustomEmailType;
+SET @email = '...@mail.com';
+GO
+
+-- Set email by property
+DECLARE @email CustomEmailType;
+SET @email.Email = 'anton@mail.com';
+SELECT 
+	@email AS [Binary], 
+	@email.ToString() AS [EmailByString]
+GO
 
