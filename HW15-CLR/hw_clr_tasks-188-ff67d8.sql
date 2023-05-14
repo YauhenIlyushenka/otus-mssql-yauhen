@@ -58,6 +58,7 @@ GO
 
 -- Set email by property
 DECLARE @email CustomEmailType;
+SET @email = 'yauhen@mail.com';
 SET @email.Email = 'anton@mail.com';
 SELECT 
 	@email AS [Binary], 
