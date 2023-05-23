@@ -50,7 +50,7 @@ PRINT N'Creating table Models'
 GO
 
 CREATE TABLE [Car].[Models] (
-	ModelID BIGINT NOT NULL IDENTITY(1,1),
+	ModelID INT NOT NULL IDENTITY(1,1),
 	BrandID INT NOT NULL,
 	[Description] NVARCHAR(100) NOT NULL
 );
@@ -66,8 +66,8 @@ PRINT N'Creating table Cars'
 GO
 
 CREATE TABLE [Car].[Cars] (
-	CarID BIGINT NOT NULL IDENTITY(1,1),
-	ModelID BIGINT NOT NULL, 
+	CarID INT NOT NULL IDENTITY(1,1),
+	ModelID INT NOT NULL, 
 	ColorID INT NOT NULL,
 	PurchasedDate DATETIME2
 )
@@ -102,8 +102,8 @@ PRINT N'Creating table Insurances'
 GO
 
 CREATE TABLE Insurance.Insurances (
-	InsuranceID BIGINT NOT NULL IDENTITY(1,1),
-	CarID BIGINT NOT NULL,
+	InsuranceID INT NOT NULL IDENTITY(1,1),
+	CarID INT NOT NULL,
 	CompanyID INT NOT NULL,
 	StartedDate DATETIME2 NOT NULL,
 	FinishedDate DATETIME2 NOT NULL,
@@ -125,7 +125,7 @@ PRINT N'Creating table Clients'
 GO
 
 CREATE TABLE [Users].[Clients] (
-	ClientID BIGINT NOT NULL IDENTITY(1,1),
+	ClientID INT NOT NULL IDENTITY(1,1),
 	FirstName NVARCHAR(50) NOT NULL,
 	LastName NVARCHAR(100) NOT NULL,
 	Email NVARCHAR(50) NOT NULL,
@@ -144,7 +144,7 @@ PRINT N'Creating table Employees'
 GO
 
 CREATE TABLE [Users].[Employees] (
-	EmployeeID BIGINT NOT NULL IDENTITY(1,1),
+	EmployeeID INT NOT NULL IDENTITY(1,1),
 	FirstName NVARCHAR(50) NOT NULL,
 	LastName NVARCHAR(100) NOT NULL,
 	Email NVARCHAR(50) NOT NULL,
@@ -162,10 +162,10 @@ PRINT N'Creating table Contracts'
 GO
 
 CREATE TABLE [Deal].[Contracts] (
-	ContractID BIGINT NOT NULL IDENTITY(1,1),
-	CarID BIGINT NOT NULL,
-	ClientID BIGINT NOT NULL,
-	EmployeeID BIGINT NOT NULL,
+	ContractID INT NOT NULL IDENTITY(1,1),
+	CarID INT NOT NULL,
+	ClientID INT NOT NULL,
+	EmployeeID INT NOT NULL,
 	CreatedDate DATETIME2,
 	DurationDays INT NOT NULL,
 	Price DECIMAL(18,3)
