@@ -102,7 +102,7 @@ PRINT N'Creating table Insurances'
 GO
 
 CREATE TABLE Insurance.Insurances (
-	InsuranceID INT NOT NULL IDENTITY(1,1),
+	InsuranceID BIGINT NOT NULL IDENTITY(1,1),
 	CarID INT NOT NULL,
 	CompanyID INT NOT NULL,
 	StartedDate DATETIME2 NOT NULL,
@@ -162,7 +162,7 @@ PRINT N'Creating table Contracts'
 GO
 
 CREATE TABLE [Deal].[Contracts] (
-	ContractID INT NOT NULL IDENTITY(1,1),
+	ContractID BIGINT NOT NULL IDENTITY(1,1),
 	CarID INT NOT NULL,
 	ClientID INT NOT NULL,
 	EmployeeID INT NOT NULL,
