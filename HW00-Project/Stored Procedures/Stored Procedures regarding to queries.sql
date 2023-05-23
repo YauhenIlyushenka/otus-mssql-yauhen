@@ -16,11 +16,11 @@ AS
 			(
 				SELECT 
 					dc.ClientID
-				FROM Users.Clients AS uc WITH(NOLOCK)
+				FROM Users.Clients AS uc
 				INNER JOIN Deal.Contracts AS dc ON dc.ClientID = uc.ClientID
-				INNER JOIN Car.Cars AS cc WITH(NOLOCK) ON dc.CarID = cc.CarID
-				INNER JOIN Car.Models AS cm WITH(NOLOCK) ON cm.ModelID = cc.ModelID
-				INNER JOIN Car.Brands AS cb WITH(NOLOCK) ON cb.BrandID = cm.BrandID
+				INNER JOIN Car.Cars AS cc ON dc.CarID = cc.CarID
+				INNER JOIN Car.Models AS cm ON cm.ModelID = cc.ModelID
+				INNER JOIN Car.Brands AS cb ON cb.BrandID = cm.BrandID
 				WHERE cb.[Description] = @BrandName
 				GROUP BY dc.ClientID
 			)
@@ -62,7 +62,7 @@ AS
 				SELECT DISTINCT
 					dc.EmployeeID
 				FROM Deal.Contracts AS dc
-				WHERE dc.CreatedDate < @CreatedDate
+				WHERE dc.CreatedDate = @CreatedDate
 			)
 
 		SELECT 
@@ -82,6 +82,7 @@ AS
 GO
 
 --EXEC [Users].[GetDataOfEmployeesByDate] @CreatedDate = '2023-05-02'
+--drop procedure [Users].[GetDataOfEmployeesByDate]
 
 PRINT N'Create stored procedure [Car].[GeCarsByBrandAndInsurancePrice]'
 GO
