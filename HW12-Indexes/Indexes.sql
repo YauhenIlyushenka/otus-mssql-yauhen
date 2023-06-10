@@ -32,5 +32,3 @@ PRINT N'Creating index [IX_Insurances_FinishedDate_INCLUDE_CompanyID] on [Insura
 GO
 CREATE NONCLUSTERED INDEX [IX_Insurances_FinishedDate_INCLUDE_CompanyID] on [Insurance].[Insurances] ([FinishedDate]) INCLUDE ([CompanyID])
 
---drop INDEX [IX_Insurances_Price_INCLUDE_CarID] on [Insurance].[Insurances]
-
