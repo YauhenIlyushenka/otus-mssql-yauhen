@@ -22,3 +22,6 @@ ALTER INDEX PK_Contracts ON [Deal].[Contracts]
 REORGANIZE;
 GO
 -- After 0.03%
+
+exec SP_ReIndex
+exec GetLastExecutedStoredProcedures
