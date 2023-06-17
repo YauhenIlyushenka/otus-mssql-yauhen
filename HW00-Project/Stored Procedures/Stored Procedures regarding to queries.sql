@@ -106,6 +106,7 @@ AS
 			INNER JOIN Car.Models AS cm ON cm.ModelID = cc.ModelID
 			INNER JOIN Car.Brands AS cb ON cb.BrandID = cm.BrandID
 			WHERE ii.Price < @Price AND cb.[Description] = @BrandName
+			OPTION (RECOMPILE);
 
 		COMMIT TRANSACTION;
 		END TRY
