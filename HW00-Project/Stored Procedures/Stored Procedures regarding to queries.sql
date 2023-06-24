@@ -117,3 +117,43 @@ AS
 		END CATCH
 	END
 GO
+
+PRINT N'Create stored procedure [Insurance].[GetInsuranceDataByExpiredCarInsurance]'
+GO
+
+CREATE PROCEDURE [Insurance].[GetCompanyDataByNearestExpiredInsurance]
+AS   
+    SET NOCOUNT ON;
+	BEGIN
+		DECLARE 
+		@EstimatedExpiredDate DATETIME2,
+		@ExpiredDateFormat DATETIME2;
+
+		SET @EstimatedExpiredDate = DATEADD(MONTH, 1, GETDATE());
+		SET @ExpiredDateFormat = DATEFROMPARTS(
+			YEAR(@EstimatedExpiredDate),
+			MONTH(@EstimatedExpiredDate),
+			DAY(@EstimatedExpiredDate))
+
+		--SELECT @EstimatedExpiredDate, @CurrentDate
+
+			BEGIN TRY
+			BEGIN TRANSACTION 
+
+				SELECT DISTINCT
+					ic.CompanyID,
+					Ic.CompanyName,
+					ic.CreatedDate
+				FROM Insurance.Insurances AS ii
+				INNER JOIN Insurance.Companies AS ic ON ii.CompanyID = ic.CompanyID
+				WHERE ii.FinishedDate = @ExpiredDateFormat
+
+			COMMIT TRANSACTION;
+			END TRY
+			BEGIN CATCH
+				DECLARE @err NVARCHAR(4000) = error_message();
+				if @@trancount > 0 ROLLBACK TRAN;
+				RAISERROR(@err, 16, 10);
+			END CATCH
+		END
+GO
