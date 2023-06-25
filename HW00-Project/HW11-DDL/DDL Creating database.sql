@@ -69,7 +69,8 @@ CREATE TABLE [Car].[Cars] (
 	CarID INT NOT NULL IDENTITY(1,1),
 	ModelID INT NOT NULL, 
 	ColorID INT NOT NULL,
-	PurchasedDate DATETIME2
+	PurchasedDate DATETIME2,
+	Price DECIMAL(18,3) NOT NULL
 )
 
 GO
