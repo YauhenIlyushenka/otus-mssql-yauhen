@@ -38,7 +38,8 @@ GO
 
 CREATE TABLE [Car].[Brands] (
 	BrandID INT NOT NULL IDENTITY(1,1),
-	[Description] NVARCHAR(100) NOT NULL
+	[Description] NVARCHAR(100) NOT NULL,
+	Price DECIMAL(18,3) NOT NULL
 );
 GO
 ALTER TABLE [Car].[Brands] 
@@ -69,8 +70,7 @@ CREATE TABLE [Car].[Cars] (
 	CarID INT NOT NULL IDENTITY(1,1),
 	ModelID INT NOT NULL, 
 	ColorID INT NOT NULL,
-	PurchasedDate DATETIME2,
-	Price DECIMAL(18,3) NOT NULL
+	PurchasedDate DATETIME2
 )
 
 GO
