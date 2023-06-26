@@ -157,3 +157,28 @@ AS
 			END CATCH
 		END
 GO
+
+PRINT N'Create stored procedure [Car].[DecreaseRentPricePerDay]'
+GO
+
+CREATE PROCEDURE [Car].[DecreaseRentPricePerDay]
+@BrandName NVARCHAR(100)
+AS   
+    SET NOCOUNT ON;
+	BEGIN
+		BEGIN TRY
+		BEGIN TRANSACTION 
+
+			UPDATE Car.Brands
+			SET Price = [Car].[Brands].[Price] * 0.95
+			WHERE [Car].[Brands].[Description] = @BrandName
+
+		COMMIT TRANSACTION;
+		END TRY
+		BEGIN CATCH
+			DECLARE @err NVARCHAR(4000) = error_message();
+			if @@trancount > 0 ROLLBACK TRAN;
+			RAISERROR(@err, 16, 10);
+		END CATCH
+	END
+GO
