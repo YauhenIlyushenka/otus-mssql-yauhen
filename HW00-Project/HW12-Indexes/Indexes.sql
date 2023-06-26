@@ -7,9 +7,8 @@ GO
 
 PRINT N'Creating some non clustered indexes on FKs'
 
-PRINT N'Creating index [IX_Cars_ModelID] on [Car].[Cars]'
+CREATE NONCLUSTERED INDEX [IX_Cars_ModelID_Include_Color_PurchaseDate] ON [Car].[Cars] ([ModelID]) INCLUDE ([ColorID],[PurchasedDate])
 GO
-CREATE NONCLUSTERED INDEX [IX_Cars_ModelID] ON [Car].[Cars] ([ModelID])
 
 PRINT N'Creating index [IX_Models_BrandID] on [Car].[Models]'
 GO
